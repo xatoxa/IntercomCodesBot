@@ -1,6 +1,7 @@
 package com.xatoxa.intercomcodesbot.controller;
 
 import com.xatoxa.intercomcodesbot.config.BotConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -8,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Controller
+@Slf4j
 public class BotController extends TelegramLongPollingBot {
 
     final BotConfig config;
@@ -55,7 +57,7 @@ public class BotController extends TelegramLongPollingBot {
         try{
             execute(sendMessage);
         }catch (TelegramApiException e){
-
+            log.error(e.getMessage());
         }
     }
 }
