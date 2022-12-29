@@ -1,8 +1,13 @@
 package com.xatoxa.intercomcodesbot.controller;
 
 import com.xatoxa.intercomcodesbot.botapi.BotState;
+import com.xatoxa.intercomcodesbot.cache.CodeCache;
 import com.xatoxa.intercomcodesbot.cache.UserDataCache;
 import com.xatoxa.intercomcodesbot.config.BotConfig;
+import com.xatoxa.intercomcodesbot.entity.Home;
+import com.xatoxa.intercomcodesbot.service.EntryService;
+import com.xatoxa.intercomcodesbot.service.HomeService;
+import com.xatoxa.intercomcodesbot.service.IntercomCodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,12 +39,17 @@ public class BotController extends TelegramLongPollingBot {
 
     final BotConfig config;
 
+    @Autowired
     UserDataCache userDataCache;
 
     @Autowired
-    public void setUserDataCache(UserDataCache userDataCache) {
-        this.userDataCache = userDataCache;
-    }
+    HomeService homeService;
+
+    @Autowired
+    EntryService entryService;
+
+    @Autowired
+    IntercomCodeService intercomCodeService;
 
     public BotController(BotConfig config){
         this.config = config;
@@ -80,7 +90,7 @@ public class BotController extends TelegramLongPollingBot {
             long userId = update.getMessage().getFrom().getId();
 
             if (update.getMessage().hasText()) {
-                commandHandler(update, chatId, userId);
+                textHandler(update, chatId, userId);
             }
             else if (update.getMessage().hasLocation()) {
                 locationHandler(update, chatId, userId);
@@ -91,7 +101,7 @@ public class BotController extends TelegramLongPollingBot {
         }
     }
 
-    private void commandHandler(Update update, long chatId, long userId){
+    private void textHandler(Update update, long chatId, long userId){
         BotState botState;
         String msgText = update.getMessage().getText();
 
