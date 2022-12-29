@@ -42,5 +42,8 @@ public class UserDataCache implements DataCache{
         return codeCache;
     }
 
+    public void removeUsersCurrentCodeCache(int userId){
+        usersCodeCache.remove(userId);
+    }
 
 }

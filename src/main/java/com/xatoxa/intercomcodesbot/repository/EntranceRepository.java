@@ -1,9 +1,9 @@
 package com.xatoxa.intercomcodesbot.repository;
 
-import com.xatoxa.intercomcodesbot.entity.Entry;
+import com.xatoxa.intercomcodesbot.entity.Entrance;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface EntryRepository extends JpaRepository<Entry, Long> {
+public interface EntranceRepository extends JpaRepository<Entrance, Long> {
 }
