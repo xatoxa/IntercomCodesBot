@@ -4,9 +4,14 @@ import com.xatoxa.intercomcodesbot.entity.Home;
 import com.xatoxa.intercomcodesbot.repository.HomeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.objects.Location;
+
+import java.util.List;
 
 @Service
 public class HomeService {
+    final Double DELTA = 0.0016; //можно вывести из констант, изменять её будет юзер
+    
     @Autowired
     HomeRepository homeRepository;
 
@@ -16,5 +21,14 @@ public class HomeService {
 
     public void delete(Home home){
         homeRepository.delete(home);
+    }
+
+    public List<Home> findAllByLocation(Location location){
+        //рассчёт "в лоб", но проект локальный, не вижу причин усложнять формулами и ГИС
+        return homeRepository.findAllByLocation(
+                location.getLongitude() - DELTA,
+                location.getLongitude() + DELTA,
+                location.getLatitude() - DELTA,
+                location.getLatitude() + DELTA);
     }
 }

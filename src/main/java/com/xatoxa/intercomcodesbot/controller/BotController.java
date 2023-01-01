@@ -197,16 +197,20 @@ public class BotController extends TelegramLongPollingBot {
                 sendMessage(chatId, "Выбери дом:", setCancelMarkup());
             }
             case ADD -> {
-                //выбери дом из имеющихся или
-
                 CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
                 Home home = new Home();
                 home.fillCoordsFromLocation(update.getMessage().getLocation());
                 codeCache.setHome(home);
                 userDataCache.setUsersCurrentCodeCache(userId, codeCache);
 
-                sendMessage(chatId, "Введи адрес формате Улица, дом", setCancelMarkup());
-                botState = BotState.ADD_HOME;
+                List<Home> homes = homeService.findAllByLocation(update.getMessage().getLocation());
+                if (homes.size() == 0) {
+                    sendMessage(chatId, "Введи адрес формате Улица, дом", setCancelMarkup());
+                    botState = BotState.ADD_HOME;
+                }else {
+                    sendMessage(chatId, "Выбери дом, для которого хочешь добавить код", setHomesMarkup(homes));
+                    botState = BotState.SELECT_HOME;
+                }
                 userDataCache.setUsersCurrentBotState(userId, botState);
             }
             case DELETE, EDIT -> {
@@ -318,7 +322,6 @@ public class BotController extends TelegramLongPollingBot {
         return inlineKeyboardMarkup;
     }
 
-
     private InlineKeyboardMarkup setCancelAcceptMarkup() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
@@ -335,5 +338,9 @@ public class BotController extends TelegramLongPollingBot {
         inlineKeyboardMarkup.setKeyboard(rows);
 
         return inlineKeyboardMarkup;
+    }
+
+    private InlineKeyboardMarkup setHomesMarkup(List<Home> homes) {
+        return null;
     }
 }
