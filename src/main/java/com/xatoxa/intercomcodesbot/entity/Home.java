@@ -30,7 +30,7 @@ public class Home {
     @Column
     private String number;
 
-    @OneToMany(mappedBy = "home", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "home", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Entrance> entrances;
 
     public Location getLocation(){
@@ -61,5 +61,14 @@ public class Home {
     public void fillCoordsFromLocation(Location location) {
         this.lon = location.getLongitude();
         this.lat = location.getLatitude();
+    }
+
+    public String getAddress(){
+        StringBuilder address = new StringBuilder();
+        address
+                .append(this.street)
+                .append(", ")
+                .append(this.number);
+        return address.toString();
     }
 }

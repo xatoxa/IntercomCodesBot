@@ -18,4 +18,8 @@ public class EntranceService {
     public void delete(Entrance entrance){
         entranceRepository.delete(entrance);
     }
+
+    public Entrance findById(Long id){
+        return entranceRepository.findById(id).get();
+    }
 }

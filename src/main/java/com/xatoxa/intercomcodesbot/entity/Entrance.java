@@ -23,7 +23,7 @@ public class Entrance {
     @ManyToOne
     private Home home;
 
-    @OneToMany
+    @OneToMany(mappedBy = "entrance", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<IntercomCode> codes;
 
     public void addCode(IntercomCode code){
@@ -35,5 +35,17 @@ public class Entrance {
 
     public void delCode(IntercomCode code){
         this.codes.remove(code);
+    }
+
+    public String getTextCodes(){
+        StringBuilder text = new StringBuilder();
+        text.append("\n");
+        for (IntercomCode code:
+             this.codes) {
+            text.append("\n");
+            text.append(code.getText());
+        }
+
+        return text.toString();
     }
 }

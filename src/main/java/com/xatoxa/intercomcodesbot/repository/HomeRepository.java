@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface HomeRepository extends JpaRepository<Home, Long> {
-    @Query("SELECT h FROM Home h WHERE h.lon BETWEEN :startLon AND :endLon AND h.lat BETWEEN :startLat AND :endLat")
+    @Query("SELECT h FROM homes h WHERE h.lon BETWEEN :startLon AND :endLon AND h.lat BETWEEN :startLat AND :endLat")
     List<Home> findAllByLocation(
             @Param("startLon") Double startLon,
             @Param("endLon") Double endLon,

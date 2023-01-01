@@ -15,6 +15,10 @@ public class HomeService {
     @Autowired
     HomeRepository homeRepository;
 
+    public Home findById(Long id){
+        return homeRepository.findById(id).get();
+    }
+
     public void save(Home home){
         homeRepository.save(home);
     }

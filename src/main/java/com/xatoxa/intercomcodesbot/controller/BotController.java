@@ -40,6 +40,10 @@ public class BotController extends TelegramLongPollingBot {
     final static String MESSAGE_AWAITING_GEO = "Жду от тебя геопозицию...";
     final static String BUTTON_CANCEL = "BUTTON_CANCEL";
     final static String BUTTON_ACCEPT = "BUTTON_ACCEPT";
+    final static String BUTTON_SELECT_HOME = "BUTTON_SELECT_HOME";
+    final static String BUTTON_SELECT_ENTRANCE = "BUTTON_SELECT_ENTRANCE";
+    final static String BUTTON_NOT_FOUND_HOME = "BUTTON_NOT_FOUND_HOME";
+    final static String BUTTON_NOT_FOUND_ENTRANCE = "BUTTON_NOT_FOUND_ENTRANCE";
 
     final BotConfig config;
 
@@ -230,19 +234,31 @@ public class BotController extends TelegramLongPollingBot {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int userId = update.getCallbackQuery().getFrom().getId().intValue();
         String callbackData = update.getCallbackQuery().getData();
+        CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
 
         if (callbackData.equals(BUTTON_CANCEL)) {
-            CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
             IntercomCode code = codeCache.getCode();
-            intercomCodeService.delete(code);
+            try {
+                intercomCodeService.delete(code);
+            }catch (Exception e){
+                log.error("BUTTON_CANCEL " + e.getMessage());
+            }
             Entrance entrance = codeCache.getEntrance();
-            entrance.delCode(code);
-            if (entrance.getCodes().size() == 0)
-                entranceService.delete(entrance);
+            try {
+                entrance.delCode(code);
+                if (entrance.getCodes().size() == 0)
+                    entranceService.delete(entrance);
+            }catch (Exception e){
+                log.error("BUTTON_CANCEL " + e.getMessage());
+            }
             Home home = codeCache.getHome();
-            home.delEntrance(entrance);
-            if (home.getEntrances().size() == 0)
-                homeService.delete(home);
+            try {
+                home.delEntrance(entrance);
+                if (home.getEntrances().size() == 0)
+                    homeService.delete(home);
+            }catch (Exception e){
+                log.error("BUTTON_CANCEL " + e.getMessage());
+            }
 
             editMessage(chatId, messageId, "Отменено.", null);
             sendMessage(chatId, MESSAGE_AWAITING);
@@ -253,6 +269,38 @@ public class BotController extends TelegramLongPollingBot {
             sendMessage(chatId, MESSAGE_AWAITING);
             botState = BotState.DEFAULT;
             userDataCache.removeUsersCurrentCodeCache(userId);
+        } else if (callbackData.equals(BUTTON_NOT_FOUND_HOME)) {
+            editMessage(chatId, messageId, "Хорошо, тогда добавь новый.", null);
+            sendMessage(chatId, "Введи адрес формате Улица, дом", setCancelMarkup());
+            botState = BotState.ADD_HOME;
+        } else if (callbackData.equals(BUTTON_NOT_FOUND_ENTRANCE)) {
+            editMessage(chatId, messageId, "Хорошо, тогда добавь новый.", null);
+            sendMessage(chatId, "Введи номер подъезда", setCancelMarkup());
+            botState = BotState.ADD_ENTRANCE;
+        } else if (callbackData.contains(BUTTON_SELECT_HOME)) {
+            Home home = homeService.findById(Long.valueOf(callbackData.split("&")[1]));
+            codeCache.setHome(home);
+            userDataCache.setUsersCurrentCodeCache(userId, codeCache);
+            if (home.getEntrances().size() == 0){
+                sendMessage(chatId, "Введи номер подъезда", setCancelMarkup());
+                botState = BotState.ADD_ENTRANCE;
+            }else {
+                sendMessage(chatId, "Выбери подъезд", setEntrancesMarkup(home.getEntrances()));
+                botState = BotState.SELECT_ENTRANCE;
+            }
+        } else if (callbackData.contains(BUTTON_SELECT_ENTRANCE)) {
+            Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[1]));
+            codeCache.setEntrance(entrance);
+            userDataCache.setUsersCurrentCodeCache(userId, codeCache);
+            if (entrance.getCodes().size() == 0){
+                sendMessage(chatId, "Введи код", setCancelMarkup());
+            }else {
+                sendMessage(
+                        chatId,
+                        "Если среди этих кодов есть твой, нажми Отмена" + entrance.getTextCodes(),
+                        setCancelMarkup());
+            }
+            botState = BotState.ADD_CODE;
         } else{ //обработать другие кнопки
             botState = userDataCache.getUsersCurrentBotState(userId);
         }
@@ -311,26 +359,30 @@ public class BotController extends TelegramLongPollingBot {
     private InlineKeyboardMarkup setCancelMarkup(){
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-        List<InlineKeyboardButton> row = new ArrayList<>();
-        InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("Отмена");
-        button.setCallbackData(BUTTON_CANCEL);
-        row.add(button);
-        rows.add(row);
+
+        rows.add(setCancelRow());
         inlineKeyboardMarkup.setKeyboard(rows);
 
         return inlineKeyboardMarkup;
     }
 
-    private InlineKeyboardMarkup setCancelAcceptMarkup() {
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+    private List<InlineKeyboardButton> setCancelRow(){
         List<InlineKeyboardButton> row = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton();
         button.setText("Отмена");
         button.setCallbackData(BUTTON_CANCEL);
         row.add(button);
-        button = new InlineKeyboardButton();
+
+        return row;
+    }
+
+    private InlineKeyboardMarkup setCancelAcceptMarkup() {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+        List<InlineKeyboardButton> row = setCancelRow();
+
+        InlineKeyboardButton button = new InlineKeyboardButton();
         button.setText("Подтвердить");
         button.setCallbackData(BUTTON_ACCEPT);
         row.add(button);
@@ -341,6 +393,58 @@ public class BotController extends TelegramLongPollingBot {
     }
 
     private InlineKeyboardMarkup setHomesMarkup(List<Home> homes) {
-        return null;
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        List<InlineKeyboardButton> row;
+        InlineKeyboardButton button;
+
+        for (Home home:
+             homes) {
+            row = new ArrayList<>();
+            button = new InlineKeyboardButton();
+            button.setText(home.getAddress());
+            button.setCallbackData(BUTTON_SELECT_HOME + "&" + home.getId());
+            row.add(button);
+            rows.add(row);
+        }
+
+        rows.add(setCancelRow());
+        row = new ArrayList<>();
+        button = new InlineKeyboardButton();
+        button.setText("Добавить новый");
+        button.setCallbackData(BUTTON_NOT_FOUND_HOME);
+        row.add(button);
+        rows.add(row);
+        inlineKeyboardMarkup.setKeyboard(rows);
+
+        return inlineKeyboardMarkup;
+    }
+
+    private InlineKeyboardMarkup setEntrancesMarkup(List<Entrance> entrances) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        List<InlineKeyboardButton> row;
+        InlineKeyboardButton button;
+
+        for (Entrance entrance:
+                entrances) {
+            row = new ArrayList<>();
+            button = new InlineKeyboardButton();
+            button.setText(entrance.getNumber());
+            button.setCallbackData(BUTTON_SELECT_ENTRANCE + "&" + entrance.getId());
+            row.add(button);
+            rows.add(row);
+        }
+
+        rows.add(setCancelRow());
+        row = new ArrayList<>();
+        button = new InlineKeyboardButton();
+        button.setText("Добавить новый");
+        button.setCallbackData(BUTTON_NOT_FOUND_ENTRANCE);
+        row.add(button);
+        rows.add(row);
+        inlineKeyboardMarkup.setKeyboard(rows);
+
+        return inlineKeyboardMarkup;
     }
 }

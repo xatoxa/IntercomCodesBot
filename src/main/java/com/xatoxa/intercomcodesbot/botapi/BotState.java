@@ -10,5 +10,6 @@ public enum BotState {
     ADD_ENTRANCE,
     ADD_CODE,
     ADD_ACCEPT,
-    SELECT_HOME
+    SELECT_HOME,
+    SELECT_ENTRANCE
 }
