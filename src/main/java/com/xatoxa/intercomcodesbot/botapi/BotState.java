@@ -3,6 +3,8 @@ package com.xatoxa.intercomcodesbot.botapi;
 public enum BotState {
     DEFAULT,
     SEARCH,
+    SEARCH_HOME,
+    SEARCH_ENTRANCE,
     DELETE,
     EDIT,
     ADD,

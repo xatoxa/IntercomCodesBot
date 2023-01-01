@@ -40,10 +40,15 @@ public class Entrance {
     public String getTextCodes(){
         StringBuilder text = new StringBuilder();
         text.append("\n");
-        for (IntercomCode code:
-             this.codes) {
-            text.append("\n");
-            text.append(code.getText());
+        if (codes.size() == 0)
+            text.append("---");
+        else {
+            for (IntercomCode code :
+                    this.codes) {
+                text.append("\t");
+                text.append(code.getText());
+                text.append("\n");
+            }
         }
 
         return text.toString();

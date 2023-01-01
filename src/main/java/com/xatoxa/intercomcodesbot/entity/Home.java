@@ -71,4 +71,20 @@ public class Home {
                 .append(this.number);
         return address.toString();
     }
+
+    public String getAllTextCodes(){
+        StringBuilder text = new StringBuilder();
+        text
+                .append(this.getAddress())
+                .append("\n");
+        for (Entrance entrance:
+             this.entrances) {
+            text.append("\n");
+            text.append("Подъезд ");
+            text.append(entrance.getNumber());
+            text.append(entrance.getTextCodes());
+        }
+
+        return text.toString();
+    }
 }
