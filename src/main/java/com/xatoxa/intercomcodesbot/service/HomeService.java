@@ -27,12 +27,16 @@ public class HomeService {
         homeRepository.delete(home);
     }
 
-    public List<Home> findAllByLocation(Location location){
+    public List<Home> findAllBy(Location location){
         //рассчёт "в лоб", но проект локальный, не вижу причин усложнять формулами и ГИС
-        return homeRepository.findAllByLocation(
+        return homeRepository.findAllBy(
                 location.getLongitude() - DELTA,
                 location.getLongitude() + DELTA,
                 location.getLatitude() - DELTA,
                 location.getLatitude() + DELTA);
+    }
+
+    public List<Home> findAllBy(String keyword){
+        return homeRepository.findAllBy(keyword);
     }
 }

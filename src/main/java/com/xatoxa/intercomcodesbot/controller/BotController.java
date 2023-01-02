@@ -38,6 +38,7 @@ public class BotController extends TelegramLongPollingBot {
             Ты конечно можешь мне рассказать обо всём на свете, но отвечать я буду только этим сообщением :)""";
     final static String MESSAGE_AWAITING = "Жду от тебя команду...";
     final static String MESSAGE_AWAITING_GEO = "Жду от тебя геопозицию...";
+    final static String MESSAGE_AWAITING_GEO_OR_KEYWORD = "Отправь мне геопозицию или ключевое слово для поиска (название улицы или номер дома). ";
     final static String BUTTON_CANCEL = "BUTTON_CANCEL";
     final static String BUTTON_ACCEPT = "BUTTON_ACCEPT";
     final static String BUTTON_SELECT_HOME = "BUTTON_SELECT_HOME";
@@ -127,7 +128,7 @@ public class BotController extends TelegramLongPollingBot {
             }
             case "/search" -> {
                 sendMessage(chatId, "Поиск");
-                sendMessage(chatId, MESSAGE_AWAITING_GEO, setCancelMarkup());
+                sendMessage(chatId, MESSAGE_AWAITING_GEO_OR_KEYWORD, setCancelMarkup());
                 botState = BotState.SEARCH;
             }
             case "/add" -> {
@@ -186,6 +187,18 @@ public class BotController extends TelegramLongPollingBot {
 
                     sendMessage(chatId, "Подтверди введённые данные", setCancelAcceptMarkup()); //добавить кнопки Назад и Подтвердить
                     botState = BotState.ADD_ACCEPT;
+                } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.SEARCH)) {
+                    List<Home> homes = homeService.findAllBy(msgText);
+                    if (homes.size() == 0){
+                        sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
+                        sendMessage(chatId, MESSAGE_AWAITING);
+                        botState = BotState.DEFAULT;
+                        //добавить кнопки "можешь посмотреть все" или "добавить код для этого дома"
+                    }else {
+                        sendMessage(chatId, "Выбери дом:", setHomesMarkup(homes, BUTTON_SEARCH_HOME));
+                        botState = BotState.SEARCH_HOME;
+                    }
+                    userDataCache.setUsersCurrentBotState(userId, botState);
                 } else {
                     sendMessage(chatId, MESSAGE_DEFAULT);
                     botState = userDataCache.getUsersCurrentBotState(userId);
@@ -200,7 +213,7 @@ public class BotController extends TelegramLongPollingBot {
 
         switch (botState) {
             case SEARCH -> {
-                List<Home> homes = homeService.findAllByLocation(update.getMessage().getLocation());
+                List<Home> homes = homeService.findAllBy(update.getMessage().getLocation());
                 if (homes.size() == 0){
                     sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
                     sendMessage(chatId, MESSAGE_AWAITING);
@@ -219,7 +232,7 @@ public class BotController extends TelegramLongPollingBot {
                 codeCache.setHome(home);
                 userDataCache.setUsersCurrentCodeCache(userId, codeCache);
 
-                List<Home> homes = homeService.findAllByLocation(update.getMessage().getLocation());
+                List<Home> homes = homeService.findAllBy(update.getMessage().getLocation());
                 if (homes.size() == 0) {
                     sendMessage(chatId, "Введи адрес формате Улица, дом", setCancelMarkup());
                     botState = BotState.ADD_HOME;

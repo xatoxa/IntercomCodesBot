@@ -7,6 +7,8 @@ import lombok.Setter;
 import org.telegram.telegrambots.meta.api.objects.Location;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Data
@@ -64,12 +66,9 @@ public class Home {
     }
 
     public String getAddress(){
-        StringBuilder address = new StringBuilder();
-        address
-                .append(this.street)
-                .append(", ")
-                .append(this.number);
-        return address.toString();
+        return this.street +
+                ", " +
+                this.number;
     }
 
     public String getAllTextCodes(){
@@ -77,6 +76,9 @@ public class Home {
         text
                 .append(this.getAddress())
                 .append("\n");
+
+        this.entrances.sort(Comparator.comparing(Entrance::getNumber));
+
         for (Entrance entrance:
              this.entrances) {
             text.append("\n");
