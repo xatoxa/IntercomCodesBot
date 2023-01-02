@@ -6,6 +6,7 @@ import com.xatoxa.intercomcodesbot.cache.UserDataCache;
 import com.xatoxa.intercomcodesbot.config.BotConfig;
 import com.xatoxa.intercomcodesbot.entity.Entrance;
 import com.xatoxa.intercomcodesbot.entity.Home;
+import com.xatoxa.intercomcodesbot.entity.HomeEntranceAbstract;
 import com.xatoxa.intercomcodesbot.entity.IntercomCode;
 import com.xatoxa.intercomcodesbot.service.EntranceService;
 import com.xatoxa.intercomcodesbot.service.HomeService;
@@ -148,13 +149,11 @@ public class BotController extends TelegramLongPollingBot {
             }
             default -> {
                 if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_HOME)){
-                    //проверка на существующий дом
                     CodeCache codeCache = userDataCache.getUsersCurrentCodeCache( userId);
                     Home home = codeCache.getHome();
-                    home.fillAddressFromMsg(msgText); //добавить try на неправильный ввод
+                    home.fillAddressFromMsg(msgText);
 
                     homeService.save(home);
-
                     userDataCache.setUsersCurrentCodeCache(userId, codeCache);
 
                     sendMessage(chatId, "Введи номер подъезда", setCancelMarkup());
@@ -195,7 +194,7 @@ public class BotController extends TelegramLongPollingBot {
                         botState = BotState.DEFAULT;
                         //добавить кнопки "можешь посмотреть все" или "добавить код для этого дома"
                     }else {
-                        sendMessage(chatId, "Выбери дом:", setHomesMarkup(homes, BUTTON_SEARCH_HOME));
+                        sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_SEARCH_HOME));
                         botState = BotState.SEARCH_HOME;
                     }
                     userDataCache.setUsersCurrentBotState(userId, botState);
@@ -221,7 +220,7 @@ public class BotController extends TelegramLongPollingBot {
                     //добавить кнопки "можешь посмотреть все" или "добавить код для этого дома"
                 }else {
                     botState = BotState.SEARCH_HOME;
-                    sendMessage(chatId, "Выбери дом:", setHomesMarkup(homes, BUTTON_SEARCH_HOME));
+                    sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_SEARCH_HOME));
                 }
                 userDataCache.setUsersCurrentBotState(userId, botState);
             }
@@ -237,7 +236,7 @@ public class BotController extends TelegramLongPollingBot {
                     sendMessage(chatId, "Введи адрес формате Улица, дом", setCancelMarkup());
                     botState = BotState.ADD_HOME;
                 }else {
-                    sendMessage(chatId, "Выбери дом, для которого хочешь добавить код", setHomesMarkup(homes, BUTTON_SELECT_HOME));
+                    sendMessage(chatId, "Выбери дом, для которого хочешь добавить код", setEntitiesMarkup(homes, BUTTON_SELECT_HOME));
                     botState = BotState.SELECT_HOME;
                 }
                 userDataCache.setUsersCurrentBotState(userId, botState);
@@ -284,7 +283,6 @@ public class BotController extends TelegramLongPollingBot {
             }catch (Exception e){
                 log.error("BUTTON_CANCEL " + e.getMessage());
             }
-
             editMessage(chatId, messageId, "Отменено.", null);
             sendMessage(chatId, MESSAGE_AWAITING);
             botState = BotState.DEFAULT;
@@ -310,7 +308,7 @@ public class BotController extends TelegramLongPollingBot {
                 sendMessage(chatId, "Введи номер подъезда", setCancelMarkup());
                 botState = BotState.ADD_ENTRANCE;
             }else {
-                sendMessage(chatId, "Выбери подъезд", setEntrancesMarkup(home.getEntrances(), BUTTON_SELECT_ENTRANCE));
+                sendMessage(chatId, "Выбери подъезд", setEntitiesMarkup(home.getEntrances(), BUTTON_SELECT_ENTRANCE));
                 botState = BotState.SELECT_ENTRANCE;
             }
         } else if (callbackData.contains(BUTTON_SEARCH_HOME)) {
@@ -321,7 +319,7 @@ public class BotController extends TelegramLongPollingBot {
                 sendMessage(chatId, MESSAGE_AWAITING);
                 botState = BotState.DEFAULT;
             } else if (home.getEntrances().size() > MAX_ENTRANCES) {
-                sendMessage(chatId, "Выбери подъезд", setEntrancesMarkup(home.getEntrances(), BUTTON_SEARCH_ENTRANCE));
+                sendMessage(chatId, "Выбери подъезд", setEntitiesMarkup(home.getEntrances(), BUTTON_SEARCH_ENTRANCE));
                 botState = BotState.SEARCH_ENTRANCE;
             } else {
                 sendMessage(chatId, home.getAllTextCodes());
@@ -360,15 +358,12 @@ public class BotController extends TelegramLongPollingBot {
 
     private void sendMessage(long chatId, String text){
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
-
         executeSendMessage(message);
     }
 
     private void sendMessage(long chatId, String text, InlineKeyboardMarkup keyboardMarkup){
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
-
         message.setReplyMarkup(keyboardMarkup);
-
         executeSendMessage(message);
     }
 
@@ -433,61 +428,39 @@ public class BotController extends TelegramLongPollingBot {
         return inlineKeyboardMarkup;
     }
 
-    private InlineKeyboardMarkup setHomesMarkup(List<Home> homes, String state) {
+    private InlineKeyboardMarkup setEntitiesMarkup(List<? extends HomeEntranceAbstract> entities, String state) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         List<InlineKeyboardButton> row;
         InlineKeyboardButton button;
 
-        for (Home home:
-             homes) {
+        for (HomeEntranceAbstract o:
+                entities) {
             row = new ArrayList<>();
             button = new InlineKeyboardButton();
-            button.setText(home.getAddress());
-            button.setCallbackData(state + "&" + home.getId());
+            button.setText(o.getAddress());
+            button.setCallbackData(state + "&" + o.getId());
+
             row.add(button);
             rows.add(row);
         }
 
         rows.add(setCancelRow());
         if (state.equals(BUTTON_SELECT_HOME)) {
-            rows.add(setNotFoundRow());
+            rows.add(setNotFoundRow(BUTTON_NOT_FOUND_HOME));
+        } else if (state.equals(BUTTON_SELECT_ENTRANCE)) {
+            rows.add(setNotFoundRow(BUTTON_NOT_FOUND_ENTRANCE));
         }
         inlineKeyboardMarkup.setKeyboard(rows);
 
         return inlineKeyboardMarkup;
     }
 
-    private InlineKeyboardMarkup setEntrancesMarkup(List<Entrance> entrances, String state) {
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-        List<InlineKeyboardButton> row;
-        InlineKeyboardButton button;
-
-        for (Entrance entrance:
-                entrances) {
-            row = new ArrayList<>();
-            button = new InlineKeyboardButton();
-            button.setText(entrance.getNumber());
-            button.setCallbackData(state + "&" + entrance.getId());
-            row.add(button);
-            rows.add(row);
-        }
-
-        rows.add(setCancelRow());
-        if (state.equals(BUTTON_SELECT_ENTRANCE)) {
-            rows.add(setNotFoundRow());
-        }
-        inlineKeyboardMarkup.setKeyboard(rows);
-
-        return inlineKeyboardMarkup;
-    }
-
-    private List<InlineKeyboardButton> setNotFoundRow(){
+    private List<InlineKeyboardButton> setNotFoundRow(String state){
         List<InlineKeyboardButton> row = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton();
         button.setText("Добавить новый");
-        button.setCallbackData(BUTTON_NOT_FOUND_HOME);
+        button.setCallbackData(state);
         row.add(button);
 
         return row;

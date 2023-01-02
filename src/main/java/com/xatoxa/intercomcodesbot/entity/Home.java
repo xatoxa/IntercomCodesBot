@@ -7,7 +7,6 @@ import lombok.Setter;
 import org.telegram.telegrambots.meta.api.objects.Location;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -15,7 +14,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity(name="homes")
-public class Home {
+public class Home extends HomeEntranceAbstract{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -65,12 +64,6 @@ public class Home {
         this.lat = location.getLatitude();
     }
 
-    public String getAddress(){
-        return this.street +
-                ", " +
-                this.number;
-    }
-
     public String getAllTextCodes(){
         StringBuilder text = new StringBuilder();
         text
@@ -88,5 +81,12 @@ public class Home {
         }
 
         return text.toString();
+    }
+
+    @Override
+    public String getAddress() {
+        return this.street +
+                ", " +
+                this.number;
     }
 }
