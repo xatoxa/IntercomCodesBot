@@ -50,7 +50,6 @@ public class BotController extends TelegramLongPollingBot {
     final static String BUTTON_NOT_FOUND_HOME = "BUTTON_NOT_FOUND_HOME";
     final static String BUTTON_NOT_FOUND_ENTRANCE = "BUTTON_NOT_FOUND_ENTRANCE";
     final static String BUTTON_DELETE_HOME = "BUTTON_DELETE_HOME";
-    final static String BUTTON_DELETE_HOME_BY_ID = "BUTTON_DELETE_HOME_BY_ID";
     final static String BUTTON_DELETE_ENTRANCE = "BUTTON_DELETE_ENTRANCE";
     final static String BUTTON_ACCEPT_DELETE_HOME = "BUTTON_ACCEPT_DELETE_HOME";
 
@@ -248,7 +247,7 @@ public class BotController extends TelegramLongPollingBot {
                     sendMessage(chatId, "Введи адрес формате Улица, дом", setMarkup(setKeyboardRow("Отмена", BUTTON_CANCEL)));
                     botState = BotState.ADD_HOME;
                 }else {
-                    sendMessage(chatId, "Выбери дом, для которого хочешь добавить код", setEntitiesMarkup(homes, BUTTON_SELECT_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
+                    sendMessage(chatId, "Выбери дом, для которого хочешь добавить код", setEntitiesMarkup(homes, BUTTON_SELECT_HOME,setKeyboardRow("Добавить новый", BUTTON_NOT_FOUND_HOME), setKeyboardRow("Отмена", BUTTON_CANCEL)));
                     botState = BotState.SELECT_HOME;
                 }
                 userDataCache.setUsersCurrentBotState(userId, botState);
@@ -269,9 +268,7 @@ public class BotController extends TelegramLongPollingBot {
             case EDIT -> {
 
             }
-            default -> {
-                sendMessage(chatId, "Используй команды, а потом уже скидывай геопозицию.");
-            }
+            default -> sendMessage(chatId, "Используй команды, а потом уже скидывай геопозицию.");
         }
     }
 
@@ -284,7 +281,6 @@ public class BotController extends TelegramLongPollingBot {
         CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
 
         if (callbackData.equals(BUTTON_CANCEL)) {
-            codeCache = null;
             editMessage(chatId, messageId, "Отменено.");
             sendMessage(chatId, MESSAGE_AWAITING);
             botState = BotState.DEFAULT;
@@ -311,7 +307,7 @@ public class BotController extends TelegramLongPollingBot {
                 sendMessage(chatId, "Введи номер подъезда", setMarkup(setKeyboardRow("Отмена", BUTTON_CANCEL)));
                 botState = BotState.ADD_ENTRANCE;
             }else {
-                sendMessage(chatId, "Выбери подъезд", setEntitiesMarkup(home.getEntrances(), BUTTON_SELECT_ENTRANCE, setKeyboardRow("Отмена", BUTTON_CANCEL)));
+                sendMessage(chatId, "Выбери подъезд", setEntitiesMarkup(home.getEntrances(), BUTTON_SELECT_ENTRANCE, setKeyboardRow("Добавить новый", BUTTON_NOT_FOUND_ENTRANCE), setKeyboardRow("Отмена", BUTTON_CANCEL)));
                 botState = BotState.SELECT_ENTRANCE;
             }
         } else if (callbackData.contains(BUTTON_SEARCH_HOME)) {
@@ -357,26 +353,22 @@ public class BotController extends TelegramLongPollingBot {
             Home home = homeService.findById(Long.valueOf(callbackData.split("&")[1]));
             codeCache.setHome(home);
             userDataCache.setUsersCurrentCodeCache(userId, codeCache);
-            String text;
+            String msgText, kbdText;
             if (home.getEntrances().size() > 0){
-                sendMessage(
-                        chatId,
-                        "Выбери подъезд " + home.getAddress(),
-                        setEntitiesMarkup(
-                                home.getEntrances(),
-                                BUTTON_DELETE_ENTRANCE,
-                                setKeyboardRow("Отмена", BUTTON_CANCEL),
-                                setKeyboardRow("Удалить этот дом", BUTTON_ACCEPT_DELETE_HOME + "&" + home.getId())));
+                msgText = "Выбери подъезд";
+                kbdText = "Удалить этот дом и все его подъезды";
                 botState = BotState.DELETE_ENTRANCE;
             } else {
-                sendMessage(
-                        chatId,
-                        "Удаление дома " + home.getAddress(),
-                        setMarkup(
-                                setKeyboardRow("Отмена", BUTTON_CANCEL),
-                                setKeyboardRow("Подтвердить удаление.", BUTTON_ACCEPT_DELETE_HOME + "&" + home.getId())));
+                msgText = "Удаление дома";
+                kbdText = "Подтвердить удаление";
                 botState = BotState.DELETE_HOME;
             }
+            sendMessage(
+                    chatId,
+                    msgText + home.getAddress(),
+                    setMarkup(
+                            setKeyboardRow("Отмена", BUTTON_CANCEL),
+                            setKeyboardRow(kbdText, BUTTON_ACCEPT_DELETE_HOME + "&" + home.getId())));
 
         } else if (callbackData.contains(BUTTON_ACCEPT_DELETE_HOME)) {
             Home home = homeService.findById(Long.valueOf(callbackData.split("&")[1]));
@@ -445,6 +437,7 @@ public class BotController extends TelegramLongPollingBot {
         return inlineKeyboardMarkup;
     }
 
+    @SafeVarargs
     private InlineKeyboardMarkup setEntitiesMarkup(
             List<? extends HomeEntranceAbstract> entities,
             String state,
@@ -466,11 +459,6 @@ public class BotController extends TelegramLongPollingBot {
         }
 
         rows.addAll(Arrays.asList(buttons));
-        if (state.equals(BUTTON_SELECT_HOME)) {
-            rows.add(setKeyboardRow("Добавить новый", BUTTON_NOT_FOUND_HOME));
-        } else if (state.equals(BUTTON_SELECT_ENTRANCE)) {
-            rows.add(setKeyboardRow("Добавить новый", BUTTON_NOT_FOUND_ENTRANCE));
-        }
         inlineKeyboardMarkup.setKeyboard(rows);
 
         return inlineKeyboardMarkup;
