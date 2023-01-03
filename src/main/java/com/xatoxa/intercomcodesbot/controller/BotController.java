@@ -218,7 +218,11 @@ public class BotController extends TelegramLongPollingBot {
                     sendMessage(chatId, MESSAGE_AWAITING);
                     botState = BotState.DEFAULT;
                     //добавить кнопки "можешь посмотреть все" или "добавить код для этого дома"
-                }else {
+                } else if (homes.size() == 1) {
+                    sendMessage(chatId, homes.get(0).getAllTextCodes());
+                    sendMessage(chatId, MESSAGE_AWAITING);
+                    botState = BotState.DEFAULT;
+                } else {
                     botState = BotState.SEARCH_HOME;
                     sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_SEARCH_HOME));
                 }
