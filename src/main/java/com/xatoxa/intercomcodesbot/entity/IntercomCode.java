@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity(name="codes")
-public class IntercomCode {
+public class IntercomCode extends HomeEntranceAbstract{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,4 +19,14 @@ public class IntercomCode {
 
     @ManyToOne
     private Entrance entrance;
+
+    @Override
+    public String getAddress() {
+        return this.text;
+    }
+
+    public void dismissEntrance(){
+        this.entrance.delCode(this);
+        this.entrance = null;
+    }
 }

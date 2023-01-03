@@ -51,7 +51,9 @@ public class BotController extends TelegramLongPollingBot {
     final static String BUTTON_NOT_FOUND_ENTRANCE = "BUTTON_NOT_FOUND_ENTRANCE";
     final static String BUTTON_DELETE_HOME = "BUTTON_DELETE_HOME";
     final static String BUTTON_DELETE_ENTRANCE = "BUTTON_DELETE_ENTRANCE";
+    final static String BUTTON_DELETE_CODE = "BUTTON_DELETE_CODE";
     final static String BUTTON_ACCEPT_DELETE_HOME = "BUTTON_ACCEPT_DELETE_HOME";
+    final static String BUTTON_ACCEPT_DELETE_ENTRANCE = "BUTTON_ACCEPT_DELETE_ENTRANCE";
 
     final static int MAX_ENTRANCES = 10;
 
@@ -354,25 +356,65 @@ public class BotController extends TelegramLongPollingBot {
             codeCache.setHome(home);
             userDataCache.setUsersCurrentCodeCache(userId, codeCache);
             String msgText, kbdText;
+            InlineKeyboardMarkup markup;
             if (home.getEntrances().size() > 0){
-                msgText = "Выбери подъезд";
-                kbdText = "Удалить этот дом и все его подъезды";
+                msgText = "Выбери подъезд ";
+                kbdText = "Удалить вместе со всеми подъездами";
                 botState = BotState.DELETE_ENTRANCE;
+                markup = setEntitiesMarkup(home.getEntrances(), BUTTON_DELETE_ENTRANCE, setKeyboardRow("Отмена", BUTTON_CANCEL),
+                        setKeyboardRow(kbdText, BUTTON_ACCEPT_DELETE_HOME + "&" + home.getId()));
             } else {
-                msgText = "Удаление дома";
+                msgText = "Удаление дома ";
                 kbdText = "Подтвердить удаление";
                 botState = BotState.DELETE_HOME;
+                markup = setMarkup(
+                        setKeyboardRow("Отмена", BUTTON_CANCEL),
+                        setKeyboardRow(kbdText, BUTTON_ACCEPT_DELETE_HOME + "&" + home.getId()));
             }
-            sendMessage(
-                    chatId,
-                    msgText + home.getAddress(),
-                    setMarkup(
-                            setKeyboardRow("Отмена", BUTTON_CANCEL),
-                            setKeyboardRow(kbdText, BUTTON_ACCEPT_DELETE_HOME + "&" + home.getId())));
+            sendMessage(chatId, msgText + home.getAddress(), markup);
+
+        }else if (callbackData.contains(BUTTON_DELETE_ENTRANCE)) {
+            Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[1]));
+            String msgText, kbdText;
+            InlineKeyboardMarkup markup;
+            if (entrance.getCodes().size() > 0){
+                msgText = "Выбери код подъезда ";
+                kbdText = "Удалить этот подъезд и все его коды";
+                botState = BotState.DELETE_CODES;
+                markup = setEntitiesMarkup(entrance.getCodes(), BUTTON_DELETE_CODE, setKeyboardRow("Отмена", BUTTON_CANCEL),
+                        setKeyboardRow(kbdText, BUTTON_ACCEPT_DELETE_ENTRANCE + "&" + entrance.getId()));
+                //добавить удаление всех кодов
+            } else {
+                msgText = "Удаление подъезда ";
+                kbdText = "Подтвердить удаление";
+                botState = BotState.DELETE_ENTRANCE;
+                markup = setMarkup(
+                        setKeyboardRow("Отмена", BUTTON_CANCEL),
+                        setKeyboardRow(kbdText, BUTTON_ACCEPT_DELETE_ENTRANCE + "&" + entrance.getId()));
+            }
+            sendMessage(chatId, msgText + entrance.getAddress(), markup);
 
         } else if (callbackData.contains(BUTTON_ACCEPT_DELETE_HOME)) {
             Home home = homeService.findById(Long.valueOf(callbackData.split("&")[1]));
             homeService.delete(home);
+            editMessage(chatId, messageId, "Удалено.");
+            sendMessage(chatId, MESSAGE_AWAITING);
+            botState = BotState.DEFAULT;
+        } else if (callbackData.contains(BUTTON_ACCEPT_DELETE_ENTRANCE)) {
+            Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[1]));
+            Home home = entrance.getHome();
+            entrance.dismissHome();
+            homeService.save(home);
+            entranceService.delete(entrance);
+            editMessage(chatId, messageId, "Удалено.");
+            sendMessage(chatId, MESSAGE_AWAITING);
+            botState = BotState.DEFAULT;
+        } else if (callbackData.contains(BUTTON_DELETE_CODE)) {
+            IntercomCode code = intercomCodeService.findById(Long.valueOf(callbackData.split("&")[1]));
+            Entrance entrance = code.getEntrance();
+            code.dismissEntrance();
+            entranceService.save(entrance);
+            intercomCodeService.delete(code);
             editMessage(chatId, messageId, "Удалено.");
             sendMessage(chatId, MESSAGE_AWAITING);
             botState = BotState.DEFAULT;

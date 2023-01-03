@@ -31,7 +31,7 @@ public class Home extends HomeEntranceAbstract{
     @Column
     private String number;
 
-    @OneToMany(mappedBy = "home", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "home", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<Entrance> entrances;
 
     public Location getLocation(){

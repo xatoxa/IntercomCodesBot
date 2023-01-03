@@ -23,7 +23,7 @@ public class Entrance extends HomeEntranceAbstract{
     @ManyToOne
     private Home home;
 
-    @OneToMany(mappedBy = "entrance", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "entrance", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<IntercomCode> codes;
 
     public void addCode(IntercomCode code){
@@ -52,6 +52,11 @@ public class Entrance extends HomeEntranceAbstract{
         }
 
         return text.toString();
+    }
+
+    public void dismissHome(){
+        this.home.delEntrance(this);
+        this.home = null;
     }
 
     @Override

@@ -18,4 +18,8 @@ public class IntercomCodeService {
     public void delete(IntercomCode code){
         intercomCodeRepository.delete(code);
     }
+
+    public IntercomCode findById(Long id){
+        return intercomCodeRepository.findById(id).get();
+    }
 }

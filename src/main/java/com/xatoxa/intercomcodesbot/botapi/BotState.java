@@ -8,6 +8,7 @@ public enum BotState {
     DELETE,
     DELETE_HOME,
     DELETE_ENTRANCE,
+    DELETE_CODES,
     EDIT,
     ADD,
     ADD_HOME,
