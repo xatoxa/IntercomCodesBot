@@ -6,6 +6,8 @@ public enum BotState {
     SEARCH_HOME,
     SEARCH_ENTRANCE,
     DELETE,
+    DELETE_HOME,
+    DELETE_ENTRANCE,
     EDIT,
     ADD,
     ADD_HOME,
