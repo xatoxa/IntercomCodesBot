@@ -169,6 +169,14 @@ public class BotController extends TelegramLongPollingBot {
                 }
                 botState = BotState.DEFAULT;
             }
+            case "/all_changes" -> {
+                sendMessage(chatId, "В процессе реализации.");
+                botState = BotState.DEFAULT;
+            }
+            case "/my_changes" -> {
+                sendMessage(chatId, "В процессе реализации");
+                botState = BotState.DEFAULT;
+            }
             default -> {
                 if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_HOME)){
                     CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
