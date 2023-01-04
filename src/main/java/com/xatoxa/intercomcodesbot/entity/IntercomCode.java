@@ -2,12 +2,10 @@ package com.xatoxa.intercomcodesbot.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.EqualsAndHashCode;
 
 @Data
-@Getter
-@Setter
+@EqualsAndHashCode(callSuper = false)
 @Entity(name="codes")
 public class IntercomCode extends HomeAbstract {
     @Id

@@ -2,8 +2,7 @@ package com.xatoxa.intercomcodesbot.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.EqualsAndHashCode;
 import org.telegram.telegrambots.meta.api.objects.Location;
 
 import java.util.ArrayList;
@@ -11,8 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Data
-@Getter
-@Setter
+@EqualsAndHashCode(callSuper = false)
 @Entity(name="homes")
 public class Home extends HomeAbstract {
     @Id

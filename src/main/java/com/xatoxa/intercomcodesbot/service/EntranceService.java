@@ -1,7 +1,6 @@
 package com.xatoxa.intercomcodesbot.service;
 
 import com.xatoxa.intercomcodesbot.entity.Entrance;
-import com.xatoxa.intercomcodesbot.entity.Home;
 import com.xatoxa.intercomcodesbot.repository.EntranceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

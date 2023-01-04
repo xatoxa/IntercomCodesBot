@@ -1,6 +1,5 @@
 package com.xatoxa.intercomcodesbot.config;
 
-import jakarta.validation.Valid;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;

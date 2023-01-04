@@ -81,9 +81,9 @@ public class BotController extends TelegramLongPollingBot {
         commands.add(new BotCommand("/add", "Добавить код."));
         commands.add(new BotCommand("/delete", "Удалить код."));
         commands.add(new BotCommand("/edit", "Изменить код."));
-        /*commands.add(new BotCommand("/all_changes", "Действия всех пользователей."));
+        commands.add(new BotCommand("/all_changes", "Действия всех пользователей."));
         commands.add(new BotCommand("/my_changes", "Действия текущего пользователя."));
-        commands.add(new BotCommand("/all_codes", "Список всех кодов."));*/
+        commands.add(new BotCommand("/all_codes", "Список всех кодов."));
 
         try {
             this.execute(new SetMyCommands(commands, new BotCommandScopeDefault(), null));
@@ -383,7 +383,6 @@ public class BotController extends TelegramLongPollingBot {
                 botState = BotState.DELETE_CODES;
                 markup = setEntitiesMarkup(entrance.getCodes(), BUTTON_DELETE_CODE, setKeyboardRow("Отмена", BUTTON_CANCEL),
                         setKeyboardRow(kbdText, BUTTON_ACCEPT_DELETE_ENTRANCE + "&" + entrance.getId()));
-                //добавить удаление всех кодов
             } else {
                 msgText = "Удаление подъезда ";
                 kbdText = "Подтвердить удаление";

@@ -1,6 +1,5 @@
 package com.xatoxa.intercomcodesbot.service;
 
-import com.xatoxa.intercomcodesbot.entity.Home;
 import com.xatoxa.intercomcodesbot.entity.IntercomCode;
 import com.xatoxa.intercomcodesbot.repository.IntercomCodeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
