@@ -29,7 +29,7 @@ public class Home extends HomeAbstract {
     @Column
     private String number;
 
-    @OneToMany(mappedBy = "home", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "home", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<Entrance> entrances;
 
     public Location getLocation(){

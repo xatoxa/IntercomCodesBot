@@ -21,7 +21,7 @@ public class Entrance extends HomeAbstract {
     @ManyToOne
     private Home home;
 
-    @OneToMany(mappedBy = "entrance", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "entrance", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<IntercomCode> codes;
 
     public void addCode(IntercomCode code){

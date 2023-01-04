@@ -158,36 +158,33 @@ public class BotController extends TelegramLongPollingBot {
             }
             default -> {
                 if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_HOME)){
-                    CodeCache codeCache = userDataCache.getUsersCurrentCodeCache( userId);
+                    CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
                     Home home = codeCache.getHome();
                     home.fillAddressFromMsg(msgText);
-
-                    homeService.save(home);
+                    codeCache.setHome(home);
                     userDataCache.setUsersCurrentCodeCache(userId, codeCache);
 
                     sendMessage(chatId, "Введи номер подъезда", setMarkup(setKeyboardRow("Отмена", BUTTON_CANCEL)));
                     botState = BotState.ADD_ENTRANCE;
                 } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_ENTRANCE)) {
                     CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
-                    Entrance entrance = new Entrance();
+                    Entrance entrance = codeCache.getEntrance();
                     entrance.setNumber(msgText);
                     entrance.setHome(codeCache.getHome());
                     codeCache.setEntrance(entrance);
                     codeCache.getHome().addEntrance(entrance);
-
-                    entranceService.save(entrance);
+                    userDataCache.setUsersCurrentCodeCache(userId, codeCache);
 
                     sendMessage(chatId, "Введи код", setMarkup(setKeyboardRow("Отмена", BUTTON_CANCEL)));
                     botState = BotState.ADD_CODE;
                 } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_CODE)) {
                     CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
-                    IntercomCode code = new IntercomCode();
+                    IntercomCode code = codeCache.getCode();
                     code.setText(msgText);
                     code.setEntrance(codeCache.getEntrance());
                     codeCache.setCode(code);
                     codeCache.getEntrance().addCode(code);
-
-                    intercomCodeService.save(code);
+                    userDataCache.setUsersCurrentCodeCache(userId, codeCache);
 
                     sendMessage(chatId, "Проверь правильно ли я записал:");
                     sendLocation(chatId, codeCache.getHome().getLocation());
@@ -332,7 +329,13 @@ public class BotController extends TelegramLongPollingBot {
             botState = BotState.DEFAULT;
             userDataCache.removeUsersCurrentCodeCache(userId);
         } else if (callbackData.equals(BUTTON_ACCEPT_ADD)) {
-            //сохранение объектов в БД должно быть здесь
+            Home home = codeCache.getHome();
+            Entrance entrance = codeCache.getEntrance();
+            IntercomCode code = codeCache.getCode();
+            homeService.save(home);
+            entranceService.save(entrance);
+            intercomCodeService.save(code);
+
             editMessage(chatId, messageId, "Подтверждено. Спасибо!");
             sendMessage(chatId, MESSAGE_AWAITING);
             botState = BotState.DEFAULT;
