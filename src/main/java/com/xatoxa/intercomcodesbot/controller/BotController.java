@@ -37,7 +37,9 @@ public class BotController extends TelegramLongPollingBot {
     final static String MESSAGE_HELP = """
             Здесь будет описание всех команд, когда они будут работать""";
     final static String MESSAGE_DEFAULT = """
-            Ты конечно можешь мне рассказать обо всём на свете, но отвечать я буду только этим сообщением :)""";
+            Ты конечно можешь мне рассказать обо всём на свете, но отвечать я буду только этим сообщением :)
+            
+            P.S. Используй команды.""";
     final static String MESSAGE_AWAITING = "Жду от тебя команду...";
     final static String MESSAGE_AWAITING_GEO = "Жду от тебя геопозицию...";
     final static String MESSAGE_AWAITING_GEO_OR_KEYWORD = "Отправь мне геопозицию или ключевое слово для поиска (название улицы или номер дома). ";
@@ -253,8 +255,7 @@ public class BotController extends TelegramLongPollingBot {
                     List<Home> homes = homeService.findAllBy(msgText);
                     if (homes.size() == 0){
                         sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
-                        sendMessage(chatId, MESSAGE_AWAITING);
-                        botState = BotState.DEFAULT;
+                        botState = BotState.SEARCH;
                         //добавить кнопки "можешь посмотреть все" или "добавить код для этого дома"
                     }else {
                         sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_SEARCH_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
@@ -278,12 +279,8 @@ public class BotController extends TelegramLongPollingBot {
                 List<Home> homes = homeService.findAllBy(update.getMessage().getLocation());
                 if (homes.size() == 0){
                     sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
-                    sendMessage(chatId, MESSAGE_AWAITING);
-                    botState = BotState.DEFAULT;
                 } else if (homes.size() == 1) {
                     sendMessage(chatId, homes.get(0).getAllTextCodes());
-                    sendMessage(chatId, MESSAGE_AWAITING);
-                    botState = BotState.DEFAULT;
                 } else {
                     botState = BotState.SEARCH_HOME;
                     sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_SEARCH_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
@@ -311,8 +308,6 @@ public class BotController extends TelegramLongPollingBot {
                 List<Home> homes = homeService.findAllBy(update.getMessage().getLocation());
                 if (homes.size() == 0){
                     sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
-                    sendMessage(chatId, MESSAGE_AWAITING);
-                    botState = BotState.DEFAULT;
                 } else {
                     botState = BotState.DELETE_HOME;
                     sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_DELETE_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
@@ -323,8 +318,6 @@ public class BotController extends TelegramLongPollingBot {
                 List<Home> homes = homeService.findAllBy(update.getMessage().getLocation());
                 if (homes.size() == 0){
                     sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
-                    sendMessage(chatId, MESSAGE_AWAITING);
-                    botState = BotState.DEFAULT;
                 } else {
                     botState = BotState.EDIT_HOME;
                     sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_EDIT_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
@@ -358,7 +351,7 @@ public class BotController extends TelegramLongPollingBot {
 
             editMessage(chatId, messageId, "Подтверждено. Спасибо!");
             sendMessage(chatId, MESSAGE_AWAITING);
-            botState = BotState.DEFAULT;
+            botState = BotState.ADD;
             userDataCache.removeUsersCurrentCodeCache(userId);
         } else if (callbackData.equals(BUTTON_NOT_FOUND_HOME)) {
             editMessage(chatId, messageId, "Хорошо, тогда добавь новый.");
@@ -384,15 +377,13 @@ public class BotController extends TelegramLongPollingBot {
             codeCache.setHome(home);
             if (home.getEntrances().size() == 0){
                 sendMessage(chatId, "Не могу найти подъезды у этого дома :(");
-                sendMessage(chatId, MESSAGE_AWAITING);
-                botState = BotState.DEFAULT;
+                botState = BotState.SEARCH;
             } else if (home.getEntrances().size() > MAX_ENTRANCES) {
                 sendMessage(chatId, "Выбери подъезд", setEntitiesMarkup(home.getEntrances(), BUTTON_SEARCH_ENTRANCE, setKeyboardRow("Отмена", BUTTON_CANCEL)));
                 botState = BotState.SEARCH_ENTRANCE;
             } else {
                 sendMessage(chatId, home.getAllTextCodes());
-                sendMessage(chatId, MESSAGE_AWAITING);
-                botState = BotState.DEFAULT;
+                botState = BotState.SEARCH;
             }
         } else if (callbackData.contains(BUTTON_SEARCH_ENTRANCE)) {
             Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[1]));
@@ -403,8 +394,7 @@ public class BotController extends TelegramLongPollingBot {
             }else {
                 sendMessage(chatId, entrance.getTextCodes());
             }
-            sendMessage(chatId, MESSAGE_AWAITING);
-            botState = BotState.DEFAULT;
+            botState = BotState.SEARCH;
         } else if (callbackData.contains(BUTTON_SELECT_ENTRANCE)) {
             Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[1]));
             codeCache.setEntrance(entrance);
