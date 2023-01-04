@@ -85,7 +85,7 @@ public class BotController extends TelegramLongPollingBot {
         commands.add(new BotCommand("/delete", "Удалить код."));
         commands.add(new BotCommand("/edit", "Изменить код."));
         commands.add(new BotCommand("/all_changes", "Действия всех пользователей."));
-        commands.add(new BotCommand("/my_changes", "Действия текущего пользователя."));
+        commands.add(new BotCommand("/my_changes", "Мои действия."));
         commands.add(new BotCommand("/all_codes", "Список всех кодов."));
 
         try {
@@ -155,6 +155,19 @@ public class BotController extends TelegramLongPollingBot {
                 sendMessage(chatId, "Изменение");
                 sendMessage(chatId, MESSAGE_AWAITING_GEO, setMarkup(setKeyboardRow("Отмена", BUTTON_CANCEL)));
                 botState = BotState.EDIT;
+            }
+            case "/all_codes" -> {
+                List<Home> homes = homeService.findAll();
+                if (homes.size() == 0)
+                    sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
+                else {
+                    sendMessage(chatId, "Все коды.");
+                    for (String sendText:
+                            allCodesToString(homes)) {
+                        sendMessage(chatId, sendText);
+                    }
+                }
+                botState = BotState.DEFAULT;
             }
             default -> {
                 if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_HOME)){
@@ -259,7 +272,6 @@ public class BotController extends TelegramLongPollingBot {
                     sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
                     sendMessage(chatId, MESSAGE_AWAITING);
                     botState = BotState.DEFAULT;
-                    //добавить кнопки "можешь посмотреть все" или "добавить код для этого дома"
                 } else if (homes.size() == 1) {
                     sendMessage(chatId, homes.get(0).getAllTextCodes());
                     sendMessage(chatId, MESSAGE_AWAITING);
@@ -598,5 +610,25 @@ public class BotController extends TelegramLongPollingBot {
         row.add(button);
 
         return row;
+    }
+
+    private List<String> allCodesToString(List<Home> homes){
+        StringBuilder stBr = new StringBuilder();
+        for (Home home:
+             homes) {
+            stBr.append("\n");
+            stBr.append(home.getAllTextCodes());
+        }
+
+        String string = stBr.toString();
+        List<String> strings = new ArrayList<>();
+
+        int i = 0;
+        while(i < string.length()){
+            strings.add(string.substring(i, Math.min(i + 4095, string.length())));
+            i += 4095;
+        }
+
+        return strings;
     }
 }

@@ -65,15 +65,14 @@ public class Home extends HomeAbstract {
     public String getAllTextCodes(){
         StringBuilder text = new StringBuilder();
         text
-                .append(this.getAddress())
-                .append("\n");
+                .append(this.getAddress());
 
         this.entrances.sort(Comparator.comparing(Entrance::getNumber));
 
         for (Entrance entrance:
              this.entrances) {
             text.append("\n");
-            text.append("Подъезд ");
+            text.append("\tПодъезд ");
             text.append(entrance.getNumber());
             text.append(entrance.getTextCodes());
         }

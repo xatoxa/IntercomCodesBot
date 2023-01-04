@@ -39,4 +39,8 @@ public class HomeService {
     public List<Home> findAllBy(String keyword){
         return homeRepository.findAllBy(keyword);
     }
+
+    public List<Home> findAll(){
+        return homeRepository.findAll();
+    }
 }

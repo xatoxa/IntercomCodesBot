@@ -43,7 +43,7 @@ public class Entrance extends HomeAbstract {
         else {
             for (IntercomCode code :
                     this.codes) {
-                text.append("\t");
+                text.append("\t\t");
                 text.append(code.getText());
                 text.append("\n");
             }
