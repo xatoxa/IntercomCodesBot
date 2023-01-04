@@ -52,6 +52,9 @@ public class BotController extends TelegramLongPollingBot {
     final static String BUTTON_DELETE_HOME = "BUTTON_DELETE_HOME";
     final static String BUTTON_DELETE_ENTRANCE = "BUTTON_DELETE_ENTRANCE";
     final static String BUTTON_DELETE_CODE = "BUTTON_DELETE_CODE";
+    final static String BUTTON_EDIT_HOME = "BUTTON_EDIT_HOME";
+    final static String BUTTON_EDIT_ENTRANCE = "BUTTON_EDIT_ENTRANCE";
+    final static String BUTTON_EDIT_CODE = "BUTTON_EDIT_CODE";
     final static String BUTTON_ACCEPT_DELETE_HOME = "BUTTON_ACCEPT_DELETE_HOME";
     final static String BUTTON_ACCEPT_DELETE_ENTRANCE = "BUTTON_ACCEPT_DELETE_ENTRANCE";
 
@@ -195,6 +198,39 @@ public class BotController extends TelegramLongPollingBot {
                             "Подтверди введённые данные",
                             setMarkup(setKeyboardRow("Подтвердить", BUTTON_ACCEPT_ADD), setKeyboardRow("Отмена", BUTTON_CANCEL)));
                     botState = BotState.ADD_ACCEPT;
+                } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.EDIT_HOME)) {
+                    CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
+                    Home home = codeCache.getHome();
+                    String oldAddress = home.getAddress();
+                    home.fillAddressFromMsg(msgText);
+                    codeCache.setHome(home);
+
+                    homeService.save(home);
+
+                    sendMessage(chatId, "Изменено " + oldAddress + " -> " + home.getAddress() + ".\n Спасибо!");
+                    botState = BotState.DEFAULT;
+                } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.EDIT_ENTRANCE)) {
+                    CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
+                    Entrance entrance = codeCache.getEntrance();
+                    String oldAddress = entrance.getAddress();
+                    entrance.setNumber(msgText);
+                    codeCache.setEntrance(entrance);
+
+                    entranceService.save(entrance);
+
+                    sendMessage(chatId, "Изменено " + oldAddress + " -> " + entrance.getAddress() + ".\n Спасибо!");
+                    botState = BotState.DEFAULT;
+                } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.EDIT_CODE)) {
+                    CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
+                    IntercomCode code = codeCache.getCode();
+                    String oldAddress = code.getAddress();
+                    code.setText(msgText);
+                    codeCache.setCode(code);
+
+                    intercomCodeService.save(code);
+
+                    sendMessage(chatId, "Изменено " + oldAddress + " -> " + code.getAddress() + ".\n Спасибо!");
+                    botState = BotState.DEFAULT;
                 } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.SEARCH)) {
                     List<Home> homes = homeService.findAllBy(msgText);
                     if (homes.size() == 0){
@@ -265,10 +301,18 @@ public class BotController extends TelegramLongPollingBot {
                     sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_DELETE_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
                 }
                 userDataCache.setUsersCurrentBotState(userId, botState);
-
             }
             case EDIT -> {
-
+                List<Home> homes = homeService.findAllBy(update.getMessage().getLocation());
+                if (homes.size() == 0){
+                    sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
+                    sendMessage(chatId, MESSAGE_AWAITING);
+                    botState = BotState.DEFAULT;
+                } else {
+                    botState = BotState.EDIT_HOME;
+                    sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_EDIT_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
+                }
+                userDataCache.setUsersCurrentBotState(userId, botState);
             }
             default -> sendMessage(chatId, "Используй команды, а потом уже скидывай геопозицию.");
         }
@@ -372,8 +416,7 @@ public class BotController extends TelegramLongPollingBot {
                         setKeyboardRow(kbdText, BUTTON_ACCEPT_DELETE_HOME + "&" + home.getId()));
             }
             sendMessage(chatId, msgText + home.getAddress(), markup);
-
-        }else if (callbackData.contains(BUTTON_DELETE_ENTRANCE)) {
+        } else if (callbackData.contains(BUTTON_DELETE_ENTRANCE)) {
             Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[1]));
             String msgText, kbdText;
             InlineKeyboardMarkup markup;
@@ -417,6 +460,45 @@ public class BotController extends TelegramLongPollingBot {
             editMessage(chatId, messageId, "Удалено.");
             sendMessage(chatId, MESSAGE_AWAITING);
             botState = BotState.DEFAULT;
+        } else if (callbackData.contains(BUTTON_EDIT_HOME)) {
+            Home home = homeService.findById(Long.valueOf(callbackData.split("&")[1]));
+            codeCache.setHome(home);
+            userDataCache.setUsersCurrentCodeCache(userId, codeCache);
+            String msgText;
+            InlineKeyboardMarkup markup;
+            if (home.getEntrances().size() > 0){
+                msgText = "Выбери подъезд или введи новый адрес в формате Улица, Дом. \nСтарый адрес: ";
+                botState = BotState.EDIT_HOME;
+                markup = setEntitiesMarkup(home.getEntrances(), BUTTON_EDIT_ENTRANCE, setKeyboardRow("Отмена", BUTTON_CANCEL));
+            } else {
+                msgText = "Введи новый адрес в формате Улица, Дом. \nСтарый адрес: ";
+                botState = BotState.EDIT_HOME;
+                markup = setMarkup(setKeyboardRow("Отмена", BUTTON_CANCEL));
+            }
+            sendMessage(chatId, msgText + home.getAddress(), markup);
+        } else if (callbackData.contains(BUTTON_EDIT_ENTRANCE)) {
+            Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[1]));
+            codeCache.setEntrance(entrance);
+            userDataCache.setUsersCurrentCodeCache(userId, codeCache);
+            String msgText;
+            InlineKeyboardMarkup markup;
+            if (entrance.getCodes().size() > 0){
+                msgText = "Выбери код или введи новый номер подезда. \nСтарый номер: ";
+                botState = BotState.EDIT_ENTRANCE;
+                markup = setEntitiesMarkup(entrance.getCodes(), BUTTON_EDIT_CODE, setKeyboardRow("Отмена", BUTTON_CANCEL));
+            } else {
+                msgText = "Введи новый номер подезда. \nСтарый номер: ";
+                botState = BotState.EDIT_ENTRANCE;
+                markup = setMarkup(setKeyboardRow("Отмена", BUTTON_CANCEL));
+            }
+            sendMessage(chatId, msgText + entrance.getAddress(), markup);
+        } else if (callbackData.contains(BUTTON_EDIT_CODE)) {
+            IntercomCode code = intercomCodeService.findById(Long.valueOf(callbackData.split("&")[1]));
+            codeCache.setCode(code);
+            userDataCache.setUsersCurrentCodeCache(userId, codeCache);
+            botState = BotState.EDIT_CODE;
+            sendMessage(chatId, "Введи новый код \n" +
+                    "Старый код: " + code.getAddress(), setMarkup(setKeyboardRow("Отмена", BUTTON_CANCEL)));
         } else{ //обработать другие кнопки
             botState = userDataCache.getUsersCurrentBotState(userId);
         }
