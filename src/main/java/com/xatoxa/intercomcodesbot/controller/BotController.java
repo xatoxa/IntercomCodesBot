@@ -6,7 +6,7 @@ import com.xatoxa.intercomcodesbot.cache.UserDataCache;
 import com.xatoxa.intercomcodesbot.config.BotConfig;
 import com.xatoxa.intercomcodesbot.entity.Entrance;
 import com.xatoxa.intercomcodesbot.entity.Home;
-import com.xatoxa.intercomcodesbot.entity.HomeEntranceAbstract;
+import com.xatoxa.intercomcodesbot.entity.HomeAbstract;
 import com.xatoxa.intercomcodesbot.entity.IntercomCode;
 import com.xatoxa.intercomcodesbot.service.EntranceService;
 import com.xatoxa.intercomcodesbot.service.HomeService;
@@ -481,7 +481,7 @@ public class BotController extends TelegramLongPollingBot {
 
     @SafeVarargs
     private InlineKeyboardMarkup setEntitiesMarkup(
-            List<? extends HomeEntranceAbstract> entities,
+            List<? extends HomeAbstract> entities,
             String state,
             List<InlineKeyboardButton> ... buttons) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
@@ -489,7 +489,7 @@ public class BotController extends TelegramLongPollingBot {
         List<InlineKeyboardButton> row;
         InlineKeyboardButton button;
 
-        for (HomeEntranceAbstract o:
+        for (HomeAbstract o:
                 entities) {
             row = new ArrayList<>();
             button = new InlineKeyboardButton();

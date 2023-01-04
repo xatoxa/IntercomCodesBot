@@ -14,7 +14,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity(name="homes")
-public class Home extends HomeEntranceAbstract{
+public class Home extends HomeAbstract {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

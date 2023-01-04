@@ -12,7 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity(name="entrances")
-public class Entrance extends HomeEntranceAbstract{
+public class Entrance extends HomeAbstract {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
