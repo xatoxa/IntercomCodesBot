@@ -8,16 +8,16 @@ import java.util.Map;
 
 @Component
 public class UserDataCache implements DataCache{
-    private final Map<Integer, BotState> usersBotState = new HashMap<>();
-    private final Map<Integer, CodeCache> usersCodeCache = new HashMap<>();
+    private final Map<Long, BotState> usersBotState = new HashMap<>();
+    private final Map<Long, CodeCache> usersCodeCache = new HashMap<>();
 
     @Override
-    public void setUsersCurrentBotState(int userId, BotState botState) {
+    public void setUsersCurrentBotState(Long userId, BotState botState) {
         usersBotState.put(userId, botState);
     }
 
     @Override
-    public BotState getUsersCurrentBotState(int userId) {
+    public BotState getUsersCurrentBotState(Long userId) {
         BotState botState = usersBotState.get(userId);
         if (botState == null){
             botState = BotState.DEFAULT;
@@ -27,12 +27,12 @@ public class UserDataCache implements DataCache{
     }
 
     @Override
-    public void setUsersCurrentCodeCache(int userId, CodeCache codeCache) {
+    public void setUsersCurrentCodeCache(Long userId, CodeCache codeCache) {
         usersCodeCache.put(userId, codeCache);
     }
 
     @Override
-    public CodeCache getUsersCurrentCodeCache(int userId) {
+    public CodeCache getUsersCurrentCodeCache(Long userId) {
         CodeCache codeCache = usersCodeCache.get(userId);
         if (codeCache == null){
             codeCache = new CodeCache();
@@ -41,7 +41,7 @@ public class UserDataCache implements DataCache{
         return codeCache;
     }
 
-    public void removeUsersCurrentCodeCache(int userId){
+    public void removeUsersCurrentCodeCache(Long userId){
         usersCodeCache.remove(userId);
     }
 

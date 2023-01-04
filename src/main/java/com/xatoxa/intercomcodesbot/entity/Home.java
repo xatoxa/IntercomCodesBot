@@ -62,7 +62,8 @@ public class Home extends HomeAbstract {
         this.lat = location.getLatitude();
     }
 
-    public String getAllTextCodes(){
+    @Override
+    public String toString() {
         StringBuilder text = new StringBuilder();
         text
                 .append(this.getAddress());
@@ -70,7 +71,7 @@ public class Home extends HomeAbstract {
         this.entrances.sort(Comparator.comparing(Entrance::getNumber));
 
         for (Entrance entrance:
-             this.entrances) {
+                this.entrances) {
             text.append("\n");
             text.append("\tПодъезд ");
             text.append(entrance.getNumber());

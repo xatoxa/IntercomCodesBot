@@ -3,11 +3,11 @@ package com.xatoxa.intercomcodesbot.cache;
 import com.xatoxa.intercomcodesbot.botapi.BotState;
 
 public interface DataCache {
-    void setUsersCurrentBotState(int userId, BotState botState);
+    void setUsersCurrentBotState(Long userId, BotState botState);
 
-    BotState getUsersCurrentBotState(int userId);
+    BotState getUsersCurrentBotState(Long userId);
 
-    void setUsersCurrentCodeCache(int userId, CodeCache codeCache);
+    void setUsersCurrentCodeCache(Long userId, CodeCache codeCache);
 
-    CodeCache getUsersCurrentCodeCache(int userId);
+    CodeCache getUsersCurrentCodeCache(Long userId);
 }

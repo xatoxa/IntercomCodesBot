@@ -4,13 +4,11 @@ import com.xatoxa.intercomcodesbot.botapi.BotState;
 import com.xatoxa.intercomcodesbot.cache.CodeCache;
 import com.xatoxa.intercomcodesbot.cache.UserDataCache;
 import com.xatoxa.intercomcodesbot.config.BotConfig;
-import com.xatoxa.intercomcodesbot.entity.Entrance;
-import com.xatoxa.intercomcodesbot.entity.Home;
-import com.xatoxa.intercomcodesbot.entity.HomeAbstract;
-import com.xatoxa.intercomcodesbot.entity.IntercomCode;
+import com.xatoxa.intercomcodesbot.entity.*;
 import com.xatoxa.intercomcodesbot.service.EntranceService;
 import com.xatoxa.intercomcodesbot.service.HomeService;
 import com.xatoxa.intercomcodesbot.service.IntercomCodeService;
+import com.xatoxa.intercomcodesbot.service.UserHistoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -27,6 +25,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -75,6 +74,9 @@ public class BotController extends TelegramLongPollingBot {
 
     @Autowired
     IntercomCodeService intercomCodeService;
+
+    @Autowired
+    UserHistoryService userHistoryService;
 
     public BotController(BotConfig config){
         this.config = config;
@@ -125,7 +127,7 @@ public class BotController extends TelegramLongPollingBot {
         }
     }
 
-    private void textHandler(Update update, long chatId, int userId){
+    private void textHandler(Update update, long chatId, long userId){
         BotState botState;
         String msgText = update.getMessage().getText();
 
@@ -165,18 +167,24 @@ public class BotController extends TelegramLongPollingBot {
                 else {
                     sendMessage(chatId, "Все коды.");
                     for (String sendText:
-                            allCodesToString(homes)) {
+                            listToString(homes)) {
                         sendMessage(chatId, sendText);
                     }
                 }
                 botState = BotState.DEFAULT;
             }
             case "/all_changes" -> {
-                sendMessage(chatId, "В процессе реализации.");
+                for (String sendText:
+                        listToString(userHistoryService.findAll())) {
+                    sendMessage(chatId, sendText, true);
+                }
                 botState = BotState.DEFAULT;
             }
             case "/my_changes" -> {
-                sendMessage(chatId, "В процессе реализации");
+                for (String sendText:
+                        listToString(userHistoryService.findAllByUserId(userId))) {
+                    sendMessage(chatId, sendText, true);
+                }
                 botState = BotState.DEFAULT;
             }
             default -> {
@@ -225,40 +233,59 @@ public class BotController extends TelegramLongPollingBot {
                     home.fillAddressFromMsg(msgText);
                     codeCache.setHome(home);
 
-                    homeService.save(home);
+                    try {
+                        homeService.save(home);
+                        UserHistory userHistory = new UserHistory(userId, oldAddress + " -> " + home.getAddress(), LocalDateTime.now());
+                        userHistoryService.save(userHistory);
+                    }catch (Exception e){
+                        sendMessage(chatId, "Что-то пошло не так: " + e.getMessage());
+                    }
 
                     sendMessage(chatId, "Изменено " + oldAddress + " -> " + home.getAddress() + ".\n Спасибо!");
                     botState = BotState.DEFAULT;
                 } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.EDIT_ENTRANCE)) {
                     CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
                     Entrance entrance = codeCache.getEntrance();
-                    String oldAddress = entrance.getAddress();
+                    String oldAddress = entrance.getInverseAddress();
                     entrance.setNumber(msgText);
                     codeCache.setEntrance(entrance);
 
-                    entranceService.save(entrance);
+                    try {
+                        entranceService.save(entrance);
+                        UserHistory userHistory = new UserHistory(userId, oldAddress + " -> " + entrance.getInverseAddress(), LocalDateTime.now());
+                        userHistoryService.save(userHistory);
 
-                    sendMessage(chatId, "Изменено " + oldAddress + " -> " + entrance.getAddress() + ".\n Спасибо!");
+                    }catch (Exception e){
+                        sendMessage(chatId, "Что-то пошло не так: " + e.getMessage());
+                    }
+
+                    sendMessage(chatId, "Изменено " + oldAddress + " -> " + entrance.getInverseAddress() + ".\n Спасибо!");
                     botState = BotState.DEFAULT;
                 } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.EDIT_CODE)) {
                     CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
                     IntercomCode code = codeCache.getCode();
-                    String oldAddress = code.getAddress();
+                    String oldAddress = code.getInverseAddress();
                     code.setText(msgText);
                     codeCache.setCode(code);
 
-                    intercomCodeService.save(code);
+                    try {
+                        intercomCodeService.save(code);
+                        UserHistory userHistory = new UserHistory(userId, oldAddress + " -> " + code.getInverseAddress(), LocalDateTime.now());
+                        userHistoryService.save(userHistory);
 
-                    sendMessage(chatId, "Изменено " + oldAddress + " -> " + code.getAddress() + ".\n Спасибо!");
+                    }catch (Exception e){
+                        sendMessage(chatId, "Что-то пошло не так: " + e.getMessage());
+                    }
+
+                    sendMessage(chatId, "Изменено " + oldAddress + " -> " + code.getInverseAddress() + ".\n Спасибо!");
                     botState = BotState.DEFAULT;
                 } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.SEARCH)) {
                     List<Home> homes = homeService.findAllBy(msgText);
                     if (homes.size() == 0){
                         sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
                         botState = BotState.SEARCH;
-                        //добавить кнопки "можешь посмотреть все" или "добавить код для этого дома"
                     }else {
-                        sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_SEARCH_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
+                        sendMessage(chatId, "Выбери дом:", setMarkup(homes, BUTTON_SEARCH_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
                         botState = BotState.SEARCH_HOME;
                     }
                     userDataCache.setUsersCurrentBotState(userId, botState);
@@ -271,7 +298,7 @@ public class BotController extends TelegramLongPollingBot {
         userDataCache.setUsersCurrentBotState(userId, botState);
     }
 
-    private void locationHandler(Update update, long chatId, int userId){
+    private void locationHandler(Update update, long chatId, long userId){
         BotState botState = userDataCache.getUsersCurrentBotState(userId);
 
         switch (botState) {
@@ -280,10 +307,10 @@ public class BotController extends TelegramLongPollingBot {
                 if (homes.size() == 0){
                     sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
                 } else if (homes.size() == 1) {
-                    sendMessage(chatId, homes.get(0).getAllTextCodes());
+                    sendMessage(chatId, homes.get(0).toString());
                 } else {
                     botState = BotState.SEARCH_HOME;
-                    sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_SEARCH_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
+                    sendMessage(chatId, "Выбери дом:", setMarkup(homes, BUTTON_SEARCH_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
                 }
                 userDataCache.setUsersCurrentBotState(userId, botState);
             }
@@ -299,7 +326,7 @@ public class BotController extends TelegramLongPollingBot {
                     sendMessage(chatId, "Введи адрес формате Улица, дом", setMarkup(setKeyboardRow("Отмена", BUTTON_CANCEL)));
                     botState = BotState.ADD_HOME;
                 }else {
-                    sendMessage(chatId, "Выбери дом, для которого хочешь добавить код", setEntitiesMarkup(homes, BUTTON_SELECT_HOME,setKeyboardRow("Добавить новый", BUTTON_NOT_FOUND_HOME), setKeyboardRow("Отмена", BUTTON_CANCEL)));
+                    sendMessage(chatId, "Выбери дом, для которого хочешь добавить код", setMarkup(homes, BUTTON_SELECT_HOME,setKeyboardRow("Добавить новый", BUTTON_NOT_FOUND_HOME), setKeyboardRow("Отмена", BUTTON_CANCEL)));
                     botState = BotState.SELECT_HOME;
                 }
                 userDataCache.setUsersCurrentBotState(userId, botState);
@@ -310,7 +337,7 @@ public class BotController extends TelegramLongPollingBot {
                     sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
                 } else {
                     botState = BotState.DELETE_HOME;
-                    sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_DELETE_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
+                    sendMessage(chatId, "Выбери дом:", setMarkup(homes, BUTTON_DELETE_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
                 }
                 userDataCache.setUsersCurrentBotState(userId, botState);
             }
@@ -320,7 +347,7 @@ public class BotController extends TelegramLongPollingBot {
                     sendMessage(chatId, "К сожалению, я ничего не нашёл :(");
                 } else {
                     botState = BotState.EDIT_HOME;
-                    sendMessage(chatId, "Выбери дом:", setEntitiesMarkup(homes, BUTTON_EDIT_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
+                    sendMessage(chatId, "Выбери дом:", setMarkup(homes, BUTTON_EDIT_HOME, setKeyboardRow("Отмена", BUTTON_CANCEL)));
                 }
                 userDataCache.setUsersCurrentBotState(userId, botState);
             }
@@ -332,7 +359,7 @@ public class BotController extends TelegramLongPollingBot {
         BotState botState;
         long messageId = update.getCallbackQuery().getMessage().getMessageId();
         long chatId = update.getCallbackQuery().getMessage().getChatId();
-        int userId = update.getCallbackQuery().getFrom().getId().intValue();
+        long userId = update.getCallbackQuery().getFrom().getId();
         String callbackData = update.getCallbackQuery().getData();
         CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
 
@@ -345,12 +372,19 @@ public class BotController extends TelegramLongPollingBot {
             Home home = codeCache.getHome();
             Entrance entrance = codeCache.getEntrance();
             IntercomCode code = codeCache.getCode();
-            homeService.save(home);
-            entranceService.save(entrance);
-            intercomCodeService.save(code);
+            try {
+                homeService.save(home);
+                entranceService.save(entrance);
+                intercomCodeService.save(code);
+                UserHistory userHistory = new UserHistory(userId, "+ " + code.getInverseAddress(), LocalDateTime.now());
+                userHistoryService.save(userHistory);
 
-            editMessage(chatId, messageId, "Подтверждено. Спасибо!");
-            sendMessage(chatId, MESSAGE_AWAITING);
+                editMessage(chatId, messageId, "Подтверждено. Спасибо!");
+            }catch (Exception e){
+                sendMessage(chatId, "Что-то пошло не так: " + e.getMessage());
+            }
+
+            sendMessage(chatId, "Добавление. \nЧтобы сменить режим, выбери другую команду.");
             botState = BotState.ADD;
             userDataCache.removeUsersCurrentCodeCache(userId);
         } else if (callbackData.equals(BUTTON_NOT_FOUND_HOME)) {
@@ -369,7 +403,7 @@ public class BotController extends TelegramLongPollingBot {
                 sendMessage(chatId, "Введи номер подъезда", setMarkup(setKeyboardRow("Отмена", BUTTON_CANCEL)));
                 botState = BotState.ADD_ENTRANCE;
             }else {
-                sendMessage(chatId, "Выбери подъезд", setEntitiesMarkup(home.getEntrances(), BUTTON_SELECT_ENTRANCE, setKeyboardRow("Добавить новый", BUTTON_NOT_FOUND_ENTRANCE), setKeyboardRow("Отмена", BUTTON_CANCEL)));
+                sendMessage(chatId, "Выбери подъезд", setMarkup(home.getEntrances(), BUTTON_SELECT_ENTRANCE, setKeyboardRow("Добавить новый", BUTTON_NOT_FOUND_ENTRANCE), setKeyboardRow("Отмена", BUTTON_CANCEL)));
                 botState = BotState.SELECT_ENTRANCE;
             }
         } else if (callbackData.contains(BUTTON_SEARCH_HOME)) {
@@ -379,10 +413,10 @@ public class BotController extends TelegramLongPollingBot {
                 sendMessage(chatId, "Не могу найти подъезды у этого дома :(");
                 botState = BotState.SEARCH;
             } else if (home.getEntrances().size() > MAX_ENTRANCES) {
-                sendMessage(chatId, "Выбери подъезд", setEntitiesMarkup(home.getEntrances(), BUTTON_SEARCH_ENTRANCE, setKeyboardRow("Отмена", BUTTON_CANCEL)));
+                sendMessage(chatId, "Выбери подъезд", setMarkup(home.getEntrances(), BUTTON_SEARCH_ENTRANCE, setKeyboardRow("Отмена", BUTTON_CANCEL)));
                 botState = BotState.SEARCH_ENTRANCE;
             } else {
-                sendMessage(chatId, home.getAllTextCodes());
+                sendMessage(chatId, home.toString());
                 botState = BotState.SEARCH;
             }
         } else if (callbackData.contains(BUTTON_SEARCH_ENTRANCE)) {
@@ -418,7 +452,7 @@ public class BotController extends TelegramLongPollingBot {
                 msgText = "Выбери подъезд ";
                 kbdText = "Удалить вместе со всеми подъездами";
                 botState = BotState.DELETE_ENTRANCE;
-                markup = setEntitiesMarkup(home.getEntrances(), BUTTON_DELETE_ENTRANCE, setKeyboardRow("Отмена", BUTTON_CANCEL),
+                markup = setMarkup(home.getEntrances(), BUTTON_DELETE_ENTRANCE, setKeyboardRow("Отмена", BUTTON_CANCEL),
                         setKeyboardRow(kbdText, BUTTON_ACCEPT_DELETE_HOME + "&" + home.getId()));
             } else {
                 msgText = "Удаление дома ";
@@ -437,7 +471,7 @@ public class BotController extends TelegramLongPollingBot {
                 msgText = "Выбери код подъезда ";
                 kbdText = "Удалить этот подъезд и все его коды";
                 botState = BotState.DELETE_CODES;
-                markup = setEntitiesMarkup(entrance.getCodes(), BUTTON_DELETE_CODE, setKeyboardRow("Отмена", BUTTON_CANCEL),
+                markup = setMarkup(entrance.getCodes(), BUTTON_DELETE_CODE, setKeyboardRow("Отмена", BUTTON_CANCEL),
                         setKeyboardRow(kbdText, BUTTON_ACCEPT_DELETE_ENTRANCE + "&" + entrance.getId()));
             } else {
                 msgText = "Удаление подъезда ";
@@ -451,26 +485,46 @@ public class BotController extends TelegramLongPollingBot {
 
         } else if (callbackData.contains(BUTTON_ACCEPT_DELETE_HOME)) {
             Home home = homeService.findById(Long.valueOf(callbackData.split("&")[1]));
-            homeService.delete(home);
-            editMessage(chatId, messageId, "Удалено.");
+            try {
+                UserHistory userHistory = new UserHistory(userId, "- " + home.getAddress(), LocalDateTime.now());
+                homeService.delete(home);
+                userHistoryService.save(userHistory);
+
+                editMessage(chatId, messageId, "Удалено.");
+            }catch (Exception e){
+                sendMessage(chatId, "Что-то пошло не так: " + e.getMessage());
+            }
             sendMessage(chatId, MESSAGE_AWAITING);
             botState = BotState.DEFAULT;
         } else if (callbackData.contains(BUTTON_ACCEPT_DELETE_ENTRANCE)) {
             Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[1]));
             Home home = entrance.getHome();
-            entrance.dismissHome();
-            homeService.save(home);
-            entranceService.delete(entrance);
-            editMessage(chatId, messageId, "Удалено.");
+            try {
+                UserHistory userHistory = new UserHistory(userId, "- " + entrance.getInverseAddress(), LocalDateTime.now());
+                entrance.dismissHome();
+                homeService.save(home);
+                entranceService.delete(entrance);
+                userHistoryService.save(userHistory);
+
+                editMessage(chatId, messageId, "Удалено.");
+            }catch (Exception e){
+                sendMessage(chatId, "Что-то пошло не так: " + e.getMessage());
+            }
             sendMessage(chatId, MESSAGE_AWAITING);
             botState = BotState.DEFAULT;
         } else if (callbackData.contains(BUTTON_DELETE_CODE)) {
             IntercomCode code = intercomCodeService.findById(Long.valueOf(callbackData.split("&")[1]));
             Entrance entrance = code.getEntrance();
-            code.dismissEntrance();
-            entranceService.save(entrance);
-            intercomCodeService.delete(code);
-            editMessage(chatId, messageId, "Удалено.");
+            try {
+                UserHistory userHistory = new UserHistory(userId, "- " + code.getInverseAddress(), LocalDateTime.now());
+                code.dismissEntrance();
+                entranceService.save(entrance);
+                intercomCodeService.delete(code);
+                userHistoryService.save(userHistory);
+                editMessage(chatId, messageId, "Удалено.");
+            }catch (Exception e){
+                sendMessage(chatId, "Что-то пошло не так: " + e.getMessage());
+            }
             sendMessage(chatId, MESSAGE_AWAITING);
             botState = BotState.DEFAULT;
         } else if (callbackData.contains(BUTTON_EDIT_HOME)) {
@@ -482,7 +536,7 @@ public class BotController extends TelegramLongPollingBot {
             if (home.getEntrances().size() > 0){
                 msgText = "Выбери подъезд или введи новый адрес в формате Улица, Дом. \nСтарый адрес: ";
                 botState = BotState.EDIT_HOME;
-                markup = setEntitiesMarkup(home.getEntrances(), BUTTON_EDIT_ENTRANCE, setKeyboardRow("Отмена", BUTTON_CANCEL));
+                markup = setMarkup(home.getEntrances(), BUTTON_EDIT_ENTRANCE, setKeyboardRow("Отмена", BUTTON_CANCEL));
             } else {
                 msgText = "Введи новый адрес в формате Улица, Дом. \nСтарый адрес: ";
                 botState = BotState.EDIT_HOME;
@@ -498,7 +552,7 @@ public class BotController extends TelegramLongPollingBot {
             if (entrance.getCodes().size() > 0){
                 msgText = "Выбери код или введи новый номер подезда. \nСтарый номер: ";
                 botState = BotState.EDIT_ENTRANCE;
-                markup = setEntitiesMarkup(entrance.getCodes(), BUTTON_EDIT_CODE, setKeyboardRow("Отмена", BUTTON_CANCEL));
+                markup = setMarkup(entrance.getCodes(), BUTTON_EDIT_CODE, setKeyboardRow("Отмена", BUTTON_CANCEL));
             } else {
                 msgText = "Введи новый номер подезда. \nСтарый номер: ";
                 botState = BotState.EDIT_ENTRANCE;
@@ -520,6 +574,15 @@ public class BotController extends TelegramLongPollingBot {
 
     private void sendMessage(long chatId, String text){
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
+        executeSendMessage(message);
+    }
+
+    private void sendMessage(long chatId, String text, boolean isMarkdown){
+        SendMessage message = new SendMessage(String.valueOf(chatId), text);
+        if (isMarkdown){
+            message.disableWebPagePreview();
+            message.setParseMode("Markdown");
+        }
         executeSendMessage(message);
     }
 
@@ -574,7 +637,7 @@ public class BotController extends TelegramLongPollingBot {
     }
 
     @SafeVarargs
-    private InlineKeyboardMarkup setEntitiesMarkup(
+    private InlineKeyboardMarkup setMarkup(
             List<? extends HomeAbstract> entities,
             String state,
             List<InlineKeyboardButton> ... buttons) {
@@ -610,15 +673,18 @@ public class BotController extends TelegramLongPollingBot {
         return row;
     }
 
-    private List<String> allCodesToString(List<Home> homes){
+    private List<String> listToString(List<?> list){
         StringBuilder stBr = new StringBuilder();
-        for (Home home:
-             homes) {
+        for (Object o:
+                list) {
             stBr.append("\n");
-            stBr.append(home.getAllTextCodes());
+            stBr.append(o.toString());
         }
 
-        String string = stBr.toString();
+        return splitTextForMessage(stBr.toString());
+    }
+
+    private List<String> splitTextForMessage(String string){
         List<String> strings = new ArrayList<>();
 
         int i = 0;

@@ -61,4 +61,9 @@ public class Entrance extends HomeAbstract {
     public String getAddress() {
         return this.number;
     }
+
+    public String getInverseAddress(){
+        return this.home.getAddress() + ", п. " + this.number;
+
+    }
 }

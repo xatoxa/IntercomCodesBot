@@ -27,4 +27,8 @@ public class IntercomCode extends HomeAbstract {
         this.entrance.delCode(this);
         this.entrance = null;
     }
+
+    public String getInverseAddress(){
+        return this.entrance.getHome().getAddress() + ", п. " + this.entrance.getAddress() + ", " + this.text;
+    }
 }
