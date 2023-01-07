@@ -233,6 +233,7 @@ public class BotController extends TelegramLongPollingBot {
                                 home.getAddress(), LocalDateTime.now());
                         userHistoryService.save(userHistory);
                     }catch (Exception e){
+                        log.error(e.getMessage());
                         sendMessage(chatId, msgService.get("message.error") + e.getMessage());
                     }
 
@@ -253,6 +254,7 @@ public class BotController extends TelegramLongPollingBot {
                         userHistoryService.save(userHistory);
 
                     }catch (Exception e){
+                        log.error(e.getMessage());
                         sendMessage(chatId, msgService.get("message.error") + e.getMessage());
                     }
 
@@ -273,6 +275,7 @@ public class BotController extends TelegramLongPollingBot {
                         userHistoryService.save(userHistory);
 
                     }catch (Exception e){
+                        log.error(e.getMessage());
                         sendMessage(chatId, msgService.get("message.error") + e.getMessage());
                     }
 
@@ -394,6 +397,7 @@ public class BotController extends TelegramLongPollingBot {
 
                 editMessage(chatId, messageId, msgService.get("message.confirm"));
             }catch (Exception e){
+                log.error(e.getMessage());
                 sendMessage(chatId, msgService.get("message.error") + e.getMessage());
             }
 
@@ -516,6 +520,7 @@ public class BotController extends TelegramLongPollingBot {
 
                 editMessage(chatId, messageId, msgService.get("message.deleted"));
             }catch (Exception e){
+                log.error(e.getMessage());
                 sendMessage(chatId, msgService.get("message.error") + e.getMessage());
             }
             sendMessage(chatId, msgService.get("message.awaitingCommand"));
@@ -533,6 +538,7 @@ public class BotController extends TelegramLongPollingBot {
 
                 editMessage(chatId, messageId, msgService.get("message.deleted"));
             }catch (Exception e){
+                log.error(e.getMessage());
                 sendMessage(chatId, msgService.get("message.error") + e.getMessage());
             }
             sendMessage(chatId, msgService.get("message.awaitingCommand"));
@@ -549,6 +555,7 @@ public class BotController extends TelegramLongPollingBot {
                 userHistoryService.save(userHistory);
                 editMessage(chatId, messageId, msgService.get("message.deleted"));
             }catch (Exception e){
+                log.error(e.getMessage());
                 sendMessage(chatId, msgService.get("message.error") + e.getMessage());
             }
             sendMessage(chatId, msgService.get("message.awaitingCommand"));
