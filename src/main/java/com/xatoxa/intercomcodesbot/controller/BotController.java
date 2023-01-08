@@ -175,7 +175,8 @@ public class BotController extends TelegramLongPollingBot {
                         listToString(userHistoryService.findAllByUserId(userId))) {
                     sendMessage(chatId, sendText, true);
                 }
-                //добавить сообщение "Ваш вклад в базу: __% от общего"
+                String percent = intercomCodeService.percentOfAll(userId);
+                sendMessage(chatId, "Твой вклад в базу: " + percent + "% от общего");
                 botState = BotState.DEFAULT;
             }
             default -> {
@@ -205,6 +206,7 @@ public class BotController extends TelegramLongPollingBot {
                     CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
                     IntercomCode code = codeCache.getCode();
                     code.setText(msgText);
+                    code.setUserId(userId);
                     code.setEntrance(codeCache.getEntrance());
                     codeCache.setCode(code);
                     codeCache.getEntrance().addCode(code);
@@ -266,6 +268,7 @@ public class BotController extends TelegramLongPollingBot {
                     IntercomCode code = codeCache.getCode();
                     String oldAddress = code.getInverseAddress();
                     code.setText(msgText);
+                    code.setUserId(userId);
                     codeCache.setCode(code);
 
                     try {

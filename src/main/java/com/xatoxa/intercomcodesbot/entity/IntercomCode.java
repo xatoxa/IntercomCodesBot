@@ -15,6 +15,9 @@ public class IntercomCode extends HomeAbstract {
     @Column
     private String text;
 
+    @Column
+    private Long userId;
+
     @ManyToOne
     private Entrance entrance;
 

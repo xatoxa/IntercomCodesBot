@@ -21,4 +21,8 @@ public class IntercomCodeService {
     public IntercomCode findById(Long id){
         return intercomCodeRepository.findById(id).get();
     }
+
+    public String percentOfAll(long userId) {
+        return String.format("%.1f", 100 * (double)intercomCodeRepository.countByUserId(userId) / (double)intercomCodeRepository.count());
+    }
 }
