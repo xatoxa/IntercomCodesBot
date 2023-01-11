@@ -2,9 +2,11 @@ package com.xatoxa.intercomcodesbot.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @Entity(name = "invitations")
 public class UserInvite {
     @Id

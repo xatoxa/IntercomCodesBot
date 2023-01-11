@@ -17,4 +17,16 @@ public class UserInviteService {
     public void delete(UserInvite invite){
         userInviteRepository.delete(invite);
     }
+
+    public Long countAll(){
+        return userInviteRepository.count();
+    }
+
+    public UserInvite getFirst(){
+        return userInviteRepository.findTopBy();
+    }
+
+    public UserInvite findById(Long id){
+        return userInviteRepository.findById(id).get();
+    }
 }

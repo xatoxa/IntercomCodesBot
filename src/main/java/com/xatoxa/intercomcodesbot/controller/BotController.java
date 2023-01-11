@@ -47,6 +47,8 @@ public class BotController extends TelegramLongPollingBot {
     final static String BUTTON_ACCEPT_DELETE_HOME = "BUTTON_ACCEPT_DELETE_HOME";
     final static String BUTTON_ACCEPT_DELETE_ENTRANCE = "BUTTON_ACCEPT_DELETE_ENTRANCE";
     final static String BUTTON_INVITE_REQUEST = "BUTTON_INVITE_REQUEST";
+    final static String BUTTON_ACCEPT_USR = "BUTTON_ACCEPT_USR";
+    final static String BUTTON_REJECT_USR = "BUTTON_REJECT_USR";
 
     final static int MAX_ENTRANCES = 10;
 
@@ -224,6 +226,30 @@ public class BotController extends TelegramLongPollingBot {
                     }
                     String percent = intercomCodeService.percentOfAll(userId);
                     sendMessage(chatId, "Твой вклад в базу: " + percent + "% от общего");
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
+                }
+                botState = BotState.DEFAULT;
+            }
+            case "/invite" -> {
+                if (userService.isEnabled(userId) || config.getOwnerId().equals(userId)) {
+                    if (userService.isAdmin(userId) || config.getOwnerId().equals(userId)) {
+                        Long inviteCount = inviteService.countAll();
+                        sendMessage(chatId, msgService.get("message.invitations") + inviteCount.toString());
+                        if (inviteCount > 0) {
+                            UserInvite invite = inviteService.getFirst();
+                            String invId = "&" + invite.getId();
+                            sendMessage(chatId,
+                                    invite.getUser().toString() + "\n\n" + msgService.get("button.accept") + "?",
+                                    getMarkup(
+                                            getKeyboardRow(msgService.get("button.accept"), "BUTTON_ACCEPT_USR" + invId),
+                                            getKeyboardRow(msgService.get("button.reject"), "BUTTON_REJECT_USR" + invId)
+                                    ),
+                                    true);
+                        }
+                    } else{
+                        sendMessage(chatId, msgService.get("message.notAdmin"));
+                    }
                 } else {
                     sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
                 }
@@ -669,6 +695,33 @@ public class BotController extends TelegramLongPollingBot {
                 sendMessage(chatId, msgService.get("message.error") + e.getMessage());
             }
             botState = BotState.DEFAULT;
+        } else if (callbackData.contains(BUTTON_ACCEPT_USR)) {
+            try {
+                UserInvite invite = inviteService.findById(Long.valueOf(callbackData.split("&")[1]));
+                User user = invite.getUser();
+                user.setEnabled(true);
+                inviteService.delete(invite);
+                userService.save(user);
+                sendMessage(user.getChatId(), msgService.get("message.acceptInvite"));
+                editMessage(chatId, messageId, msgService.get("message.confirm"));
+            }catch (Exception e){
+                log.error(e.getMessage());
+                sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+            }
+            botState = BotState.DEFAULT;
+        } else if (callbackData.contains(BUTTON_REJECT_USR)) {
+            try {
+                UserInvite invite = inviteService.findById(Long.valueOf(callbackData.split("&")[1]));
+                User user = invite.getUser();
+                inviteService.delete(invite);
+                userService.delete(user);
+                sendMessage(user.getChatId(), msgService.get("message.rejectInvite"));
+                editMessage(chatId, messageId, msgService.get("message.confirm"));
+            }catch (Exception e){
+                log.error(e.getMessage());
+                sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+            }
+            botState = BotState.DEFAULT;
         } else{ //обработать другие кнопки
             botState = userDataCache.getUsersCurrentBotState(userId);
         }
@@ -677,6 +730,12 @@ public class BotController extends TelegramLongPollingBot {
 
     private void sendMessage(long chatId, String text){
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
+        executeSendMessage(message);
+    }
+
+    private void sendMessage(long chatId, String text, InlineKeyboardMarkup keyboardMarkup){
+        SendMessage message = new SendMessage(String.valueOf(chatId), text);
+        message.setReplyMarkup(keyboardMarkup);
         executeSendMessage(message);
     }
 
@@ -689,9 +748,13 @@ public class BotController extends TelegramLongPollingBot {
         executeSendMessage(message);
     }
 
-    private void sendMessage(long chatId, String text, InlineKeyboardMarkup keyboardMarkup){
+    private void sendMessage(long chatId, String text, InlineKeyboardMarkup keyboardMarkup, boolean isMarkdown){
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
         message.setReplyMarkup(keyboardMarkup);
+        if (isMarkdown){
+            message.disableWebPagePreview();
+            message.setParseMode("Markdown");
+        }
         executeSendMessage(message);
     }
 

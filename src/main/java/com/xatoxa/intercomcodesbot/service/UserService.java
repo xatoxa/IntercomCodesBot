@@ -22,6 +22,16 @@ public class UserService {
         return enabled;
     }
 
+    public boolean isAdmin(Long userId){
+        boolean admin;
+        try {
+            admin = userRepository.findById(userId).get().isAdmin();
+        }catch (NoSuchElementException e){
+            admin = false;
+        }
+        return admin;
+    }
+
     public boolean existsById(Long userID){
         return userRepository.existsById(userID);
     }

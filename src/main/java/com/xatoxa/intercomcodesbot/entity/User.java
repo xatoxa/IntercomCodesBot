@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Entity(name = "users")
 public class User {
     @Id
-    private Long Id;
+    private Long id;
 
     @Column
     private Long chatId;
@@ -32,4 +32,12 @@ public class User {
 
     @Column
     private boolean enabled;
+
+    @Override
+    public String toString() {
+        return "[" + this.id + "](tg://user?id=" + this.id + ")\n" +
+                (firstName == null ? "" : firstName) + " " +
+                (lastName == null ? "" : lastName) + " " +
+                (username == null ? "" : "@" + username);
+    }
 }
