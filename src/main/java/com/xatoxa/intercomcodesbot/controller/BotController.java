@@ -46,10 +46,12 @@ public class BotController extends TelegramLongPollingBot {
     final static String BUTTON_EDIT_CODE = "BUTTON_EDIT_CODE";
     final static String BUTTON_ACCEPT_DELETE_HOME = "BUTTON_ACCEPT_DELETE_HOME";
     final static String BUTTON_ACCEPT_DELETE_ENTRANCE = "BUTTON_ACCEPT_DELETE_ENTRANCE";
+    final static String BUTTON_INVITE_REQUEST = "BUTTON_INVITE_REQUEST";
 
     final static int MAX_ENTRANCES = 10;
 
     final BotConfig config;
+    final LocaleMessageService msgService;
 
     @Autowired
     UserDataCache userDataCache;
@@ -66,7 +68,11 @@ public class BotController extends TelegramLongPollingBot {
     @Autowired
     UserHistoryService userHistoryService;
 
-    LocaleMessageService msgService;
+    @Autowired
+    UserService userService;
+
+    @Autowired
+    UserInviteService inviteService;
 
     public BotController(BotConfig config, LocaleMessageService msgService){
         this.config = config;
@@ -124,59 +130,103 @@ public class BotController extends TelegramLongPollingBot {
 
         switch (msgText) {
             case "/start" -> {
-                sendMessage(chatId, msgService.get("message.awaitingCommand"));
-                botState = BotState.DEFAULT;
+                if (!userService.existsById(userId)) {
+                    sendMessage(chatId, msgService.get("message.sendInviteRequest"),
+                            getMarkup(getKeyboardRow(msgService.get("button.sendInviteRequest"), BUTTON_INVITE_REQUEST)));
+                    botState = BotState.DEFAULT;
+                } else {
+                    User user = userService.findById(userId);
+                    if (user.isEnabled()) {
+                        sendMessage(chatId, msgService.get("message.searchMode"));
+                        botState = BotState.SEARCH;
+                    } else {
+                        sendMessage(chatId, msgService.get("message.waitForConfirm"));
+                        botState = BotState.DEFAULT;
+                    }
+                }
             }
             case "/help" -> {
                 sendMessage(chatId, msgService.get("message.help"));
                 botState = BotState.DEFAULT;
             }
             case "/search" -> {
-                sendMessage(chatId, msgService.get("message.awaitingGeoOrKey"),
-                        getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
-                botState = BotState.SEARCH;
+                if (userService.isEnabled(userId)) {
+                    sendMessage(chatId, msgService.get("message.awaitingGeoOrKey"),
+                            getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                    botState = BotState.SEARCH;
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
+                    botState = BotState.DEFAULT;
+                }
             }
             case "/add" -> {
-                sendMessage(chatId, msgService.get("message.awaitingGeo"),
-                        getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
-                botState = BotState.ADD;
+                if (userService.isEnabled(userId)) {
+                    sendMessage(chatId, msgService.get("message.awaitingGeo"),
+                            getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                    botState = BotState.ADD;
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
+                    botState = BotState.DEFAULT;
+                }
             }
             case "/delete" -> {
-                sendMessage(chatId, msgService.get("message.awaitingGeo"),
-                        getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
-                botState = BotState.DELETE;
+                if (userService.isEnabled(userId)) {
+                    sendMessage(chatId, msgService.get("message.awaitingGeo"),
+                            getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                    botState = BotState.DELETE;
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
+                    botState = BotState.DEFAULT;
+                }
             }
             case "/edit" -> {
-                sendMessage(chatId, msgService.get("message.awaitingGeo"),
-                        getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
-                botState = BotState.EDIT;
+                if (userService.isEnabled(userId)) {
+                    sendMessage(chatId, msgService.get("message.awaitingGeo"),
+                            getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                    botState = BotState.EDIT;
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
+                    botState = BotState.DEFAULT;
+                }
             }
             case "/all_codes" -> {
-                List<Home> homes = homeService.findAll();
-                if (homes.size() == 0)
-                    sendMessage(chatId, msgService.get("message.notFound"));
-                else {
-                    for (String sendText:
-                            listToString(homes)) {
-                        sendMessage(chatId, sendText);
+                if (userService.isEnabled(userId)) {
+                    List<Home> homes = homeService.findAll();
+                    if (homes.size() == 0)
+                        sendMessage(chatId, msgService.get("message.notFound"));
+                    else {
+                        for (String sendText :
+                                listToString(homes)) {
+                            sendMessage(chatId, sendText);
+                        }
                     }
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
                 }
                 botState = BotState.DEFAULT;
             }
             case "/all_changes" -> {
-                for (String sendText:
-                        listToString(userHistoryService.findAll())) {
-                    sendMessage(chatId, sendText, true);
+                if (userService.isEnabled(userId)) {
+                    for (String sendText :
+                            listToString(userHistoryService.findAll())) {
+                        sendMessage(chatId, sendText, true);
+                    }
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
                 }
                 botState = BotState.DEFAULT;
             }
             case "/my_changes" -> {
-                for (String sendText:
-                        listToString(userHistoryService.findAllByUserId(userId))) {
-                    sendMessage(chatId, sendText, true);
+                if (userService.isEnabled(userId)) {
+                    for (String sendText :
+                            listToString(userHistoryService.findAllByUserId(userId))) {
+                        sendMessage(chatId, sendText, true);
+                    }
+                    String percent = intercomCodeService.percentOfAll(userId);
+                    sendMessage(chatId, "Твой вклад в базу: " + percent + "% от общего");
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
                 }
-                String percent = intercomCodeService.percentOfAll(userId);
-                sendMessage(chatId, "Твой вклад в базу: " + percent + "% от общего");
                 botState = BotState.DEFAULT;
             }
             default -> {
@@ -604,6 +654,21 @@ public class BotController extends TelegramLongPollingBot {
             botState = BotState.EDIT_CODE;
             sendMessage(chatId, msgService.get("message.editCode") + code.getAddress(),
                     getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+        } else if (callbackData.contains(BUTTON_INVITE_REQUEST)) {
+            try {
+                User user = new User(userId, chatId,
+                        update.getCallbackQuery().getFrom().getFirstName(),
+                        update.getCallbackQuery().getFrom().getLastName(),
+                        update.getCallbackQuery().getFrom().getUserName(),
+                        false, false);
+                userService.save(user);
+                inviteService.save(new UserInvite(user));
+                editMessage(chatId, messageId, msgService.get("message.inviteHBSent"));
+            }catch (Exception e){
+                log.error(e.getMessage());
+                sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+            }
+            botState = BotState.DEFAULT;
         } else{ //обработать другие кнопки
             botState = userDataCache.getUsersCurrentBotState(userId);
         }

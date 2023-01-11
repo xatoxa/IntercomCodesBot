@@ -21,6 +21,9 @@ public class BotConfig {
     @Value("${bot.token}")
     String botToken;
 
+    @Value("${bot.owner}")
+    Long ownerId;
+
     @Bean
     public MessageSource messageSource(){
         ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
