@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
-@RequiredArgsConstructor
 @Entity(name = "users_history")
 public class UserHistory {
     @Id
@@ -18,19 +17,28 @@ public class UserHistory {
     private Long id;
 
     @Column
-    @NonNull
     private Long userId;
 
     @Column
-    @NonNull
+    private String username;
+
+    @Column
     private String action;
 
     @Column
-    @NonNull
     private LocalDateTime dateTime;
+
+    public UserHistory(Long userId, String username, String action, LocalDateTime dateTime) {
+        this.userId = userId;
+        this.username = username;
+        this.action = action;
+        this.dateTime = dateTime;
+    }
 
     @Override
     public String toString() {
-        return "[" + this.userId + "](tg://user?id=" + this.userId + ") | " + this.action;
+        String link = username == null ? "[" + this.userId + "](tg://user?id=" + this.userId + ")" : "@" + this.username;
+
+        return link + " | " + this.action;
     }
 }

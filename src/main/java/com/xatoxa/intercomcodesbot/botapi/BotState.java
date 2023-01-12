@@ -19,5 +19,7 @@ public enum BotState {
     ADD_CODE,
     ADD_ACCEPT,
     SELECT_HOME,
-    SELECT_ENTRANCE
+    SELECT_ENTRANCE,
+    MAKE_ADMIN,
+    DEMOTE_ADMIN
 }

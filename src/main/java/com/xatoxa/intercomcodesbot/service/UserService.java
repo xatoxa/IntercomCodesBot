@@ -5,6 +5,7 @@ import com.xatoxa.intercomcodesbot.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -46,5 +47,17 @@ public class UserService {
 
     public void delete(User user){
         userRepository.delete(user);
+    }
+
+    public String findAllByAdmin(boolean isAdmin){
+        List<User> users = userRepository.findAllByAdmin(isAdmin);
+        StringBuilder stB = new StringBuilder();
+        if (users.size() != 0) {
+            for (User user :
+                    users) {
+                stB.append(user.toString()).append("\n");
+            }
+        } else stB.append("Empty");
+        return stB.toString();
     }
 }

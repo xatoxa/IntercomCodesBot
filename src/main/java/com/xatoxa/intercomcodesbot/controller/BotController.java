@@ -90,6 +90,7 @@ public class BotController extends TelegramLongPollingBot {
         commands.add(new BotCommand("/all_changes",  msgService.get("command.all_changes")));
         commands.add(new BotCommand("/my_changes",  msgService.get("command.my_changes")));
         commands.add(new BotCommand("/all_codes",  msgService.get("command.all_codes")));
+        commands.add(new BotCommand("/admin_help", msgService.get("command.admin_help")));
 
         try {
             this.execute(new SetMyCommands(commands, new BotCommandScopeDefault(), null));
@@ -139,6 +140,12 @@ public class BotController extends TelegramLongPollingBot {
                 } else {
                     User user = userService.findById(userId);
                     if (user.isEnabled()) {
+                        user.setChatId(chatId);
+                        try{
+                            userService.save(user);
+                        }catch (Exception e){
+                            log.error(e.getMessage());
+                        }
                         sendMessage(chatId, msgService.get("message.searchMode"));
                         botState = BotState.SEARCH;
                     } else {
@@ -231,6 +238,18 @@ public class BotController extends TelegramLongPollingBot {
                 }
                 botState = BotState.DEFAULT;
             }
+            case "/admin_help" -> {
+                if (userService.isEnabled(userId) || config.getOwnerId().equals(userId)) {
+                    if (userService.isAdmin(userId) || config.getOwnerId().equals(userId)) {
+                        sendMessage(chatId, msgService.get("message.admin_help"));
+                    } else{
+                        sendMessage(chatId, msgService.get("message.notAdmin"));
+                    }
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
+                }
+                botState = BotState.DEFAULT;
+            }
             case "/invite" -> {
                 if (userService.isEnabled(userId) || config.getOwnerId().equals(userId)) {
                     if (userService.isAdmin(userId) || config.getOwnerId().equals(userId)) {
@@ -254,6 +273,60 @@ public class BotController extends TelegramLongPollingBot {
                     sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
                 }
                 botState = BotState.DEFAULT;
+            }
+            case "/admins" -> {
+                if (userService.isEnabled(userId) || config.getOwnerId().equals(userId)) {
+                    if (userService.isAdmin(userId) || config.getOwnerId().equals(userId)) {
+                        sendMessage(chatId, userService.findAllByAdmin(true));
+                    } else{
+                        sendMessage(chatId, msgService.get("message.notAdmin"));
+                    }
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
+                }
+                botState = BotState.DEFAULT;
+            }
+            case "/users" -> {
+                if (userService.isEnabled(userId) || config.getOwnerId().equals(userId)) {
+                    if (userService.isAdmin(userId) || config.getOwnerId().equals(userId)) {
+                        sendMessage(chatId, userService.findAllByAdmin(false));
+                    } else{
+                        sendMessage(chatId, msgService.get("message.notAdmin"));
+                    }
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
+                }
+                botState = BotState.DEFAULT;
+            }
+            case "/make_admin" -> {
+                if (userService.isEnabled(userId) || config.getOwnerId().equals(userId)) {
+                    if (userService.isAdmin(userId) || config.getOwnerId().equals(userId)) {
+                        sendMessage(chatId, msgService.get("message.waitId"),
+                                getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                        botState = BotState.MAKE_ADMIN;
+                    } else{
+                        sendMessage(chatId, msgService.get("message.notAdmin"));
+                        botState = BotState.DEFAULT;
+                    }
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
+                    botState = BotState.DEFAULT;
+                }
+            }
+            case "/demote_admin" -> {
+                if (userService.isEnabled(userId) || config.getOwnerId().equals(userId)) {
+                    if (userService.isAdmin(userId) || config.getOwnerId().equals(userId)) {
+                        sendMessage(chatId, msgService.get("message.waitId"),
+                                getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                        botState = BotState.DEMOTE_ADMIN;
+                    } else{
+                        sendMessage(chatId, msgService.get("message.notAdmin"));
+                        botState = BotState.DEFAULT;
+                    }
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
+                    botState = BotState.DEFAULT;
+                }
             }
             default -> {
                 if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_HOME)){
@@ -307,7 +380,8 @@ public class BotController extends TelegramLongPollingBot {
 
                     try {
                         homeService.save(home);
-                        UserHistory userHistory = new UserHistory(userId, oldAddress + " -> " +
+                        UserHistory userHistory = new UserHistory(userId, update.getMessage().getFrom().getUserName(),
+                                oldAddress + " -> " +
                                 home.getAddress(), LocalDateTime.now());
                         userHistoryService.save(userHistory);
                     }catch (Exception e){
@@ -327,7 +401,8 @@ public class BotController extends TelegramLongPollingBot {
 
                     try {
                         entranceService.save(entrance);
-                        UserHistory userHistory = new UserHistory(userId, oldAddress + " -> " +
+                        UserHistory userHistory = new UserHistory(userId, update.getMessage().getFrom().getUserName(),
+                                oldAddress + " -> " +
                                 entrance.getInverseAddress(), LocalDateTime.now());
                         userHistoryService.save(userHistory);
 
@@ -350,7 +425,8 @@ public class BotController extends TelegramLongPollingBot {
                     try {
                         intercomCodeService.save(code);
                         UserHistory userHistory = new UserHistory(
-                                userId, oldAddress + " -> " + code.getInverseAddress(), LocalDateTime.now());
+                                userId, update.getMessage().getFrom().getUserName(),
+                                oldAddress + " -> " + code.getInverseAddress(), LocalDateTime.now());
                         userHistoryService.save(userHistory);
 
                     }catch (Exception e){
@@ -372,6 +448,30 @@ public class BotController extends TelegramLongPollingBot {
                                         getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
                         botState = BotState.SEARCH_HOME;
                     }
+                    userDataCache.setUsersCurrentBotState(userId, botState);
+                } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.MAKE_ADMIN)) {
+                    try {
+                        User user = userService.findById(Long.valueOf(msgText));
+                        user.setAdmin(true);
+                        userService.save(user);
+                        sendMessage(chatId, user + "\n " + msgService.get("message.userToAdmin"));
+                    }catch (Exception e){
+                        log.error(e.getMessage());
+                        sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+                    }
+                    botState = BotState.DEFAULT;
+                    userDataCache.setUsersCurrentBotState(userId, botState);
+                } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.DEMOTE_ADMIN)) {
+                    try {
+                        User user = userService.findById(Long.valueOf(msgText));
+                        user.setAdmin(false);
+                        userService.save(user);
+                        sendMessage(chatId, user + "\n" + msgService.get("message.adminToUser"));
+                    }catch (Exception e){
+                        log.error(e.getMessage());
+                        sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+                    }
+                    botState = BotState.DEFAULT;
                     userDataCache.setUsersCurrentBotState(userId, botState);
                 } else {
                     sendMessage(chatId, msgService.get("message.default"));
@@ -471,7 +571,7 @@ public class BotController extends TelegramLongPollingBot {
                 entranceService.save(entrance);
                 intercomCodeService.save(code);
                 UserHistory userHistory = new UserHistory(
-                        userId, "+ " + code.getInverseAddress(), LocalDateTime.now());
+                        userId, update.getCallbackQuery().getFrom().getUserName(), "+ " + code.getInverseAddress(), LocalDateTime.now());
                 userHistoryService.save(userHistory);
 
                 editMessage(chatId, messageId, msgService.get("message.confirm"));
@@ -593,7 +693,8 @@ public class BotController extends TelegramLongPollingBot {
         } else if (callbackData.contains(BUTTON_ACCEPT_DELETE_HOME)) {
             Home home = homeService.findById(Long.valueOf(callbackData.split("&")[1]));
             try {
-                UserHistory userHistory = new UserHistory(userId, "- " + home.getAddress(), LocalDateTime.now());
+                UserHistory userHistory = new UserHistory(userId, update.getCallbackQuery().getFrom().getUserName(),
+                        "- " + home.getAddress(), LocalDateTime.now());
                 homeService.delete(home);
                 userHistoryService.save(userHistory);
 
@@ -609,7 +710,8 @@ public class BotController extends TelegramLongPollingBot {
             Home home = entrance.getHome();
             try {
                 UserHistory userHistory = new UserHistory(
-                        userId, "- " + entrance.getInverseAddress(), LocalDateTime.now());
+                        userId, update.getCallbackQuery().getFrom().getUserName(),
+                        "- " + entrance.getInverseAddress(), LocalDateTime.now());
                 entrance.dismissHome();
                 homeService.save(home);
                 entranceService.delete(entrance);
@@ -627,7 +729,8 @@ public class BotController extends TelegramLongPollingBot {
             Entrance entrance = code.getEntrance();
             try {
                 UserHistory userHistory = new UserHistory(
-                        userId, "- " + code.getInverseAddress(), LocalDateTime.now());
+                        userId, update.getCallbackQuery().getFrom().getUserName(),
+                        "- " + code.getInverseAddress(), LocalDateTime.now());
                 code.dismissEntrance();
                 entranceService.save(entrance);
                 intercomCodeService.delete(code);

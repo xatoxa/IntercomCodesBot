@@ -35,9 +35,11 @@ public class User {
 
     @Override
     public String toString() {
-        return "[" + this.id + "](tg://user?id=" + this.id + ")\n" +
-                (firstName == null ? "" : firstName) + " " +
-                (lastName == null ? "" : lastName) + " " +
-                (username == null ? "" : "@" + username);
+        String link =
+                this.username == null ?
+                        "[" + this.id + "](tg://user?id=" + this.id + ")"
+                        : "@" + this.username;
+        return this.id + " " + link + " " + (this.firstName == null ? "" : this.firstName) + " " +
+                (this.lastName == null ? "" : this.lastName);
     }
 }
