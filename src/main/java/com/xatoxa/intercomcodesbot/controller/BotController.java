@@ -277,7 +277,7 @@ public class BotController extends TelegramLongPollingBot {
             case "/admins" -> {
                 if (userService.isEnabled(userId) || config.getOwnerId().equals(userId)) {
                     if (userService.isAdmin(userId) || config.getOwnerId().equals(userId)) {
-                        sendMessage(chatId, userService.findAllByAdmin(true));
+                        sendMessage(chatId, userService.findAllByAdminToString(true));
                     } else{
                         sendMessage(chatId, msgService.get("message.notAdmin"));
                     }
@@ -289,7 +289,7 @@ public class BotController extends TelegramLongPollingBot {
             case "/users" -> {
                 if (userService.isEnabled(userId) || config.getOwnerId().equals(userId)) {
                     if (userService.isAdmin(userId) || config.getOwnerId().equals(userId)) {
-                        sendMessage(chatId, userService.findAllByAdmin(false));
+                        sendMessage(chatId, userService.findAllByAdminToString(false));
                     } else{
                         sendMessage(chatId, msgService.get("message.notAdmin"));
                     }
@@ -792,6 +792,11 @@ public class BotController extends TelegramLongPollingBot {
                         false, false);
                 userService.save(user);
                 inviteService.save(new UserInvite(user));
+
+                for (Long adminChatId:   //сообщение всем админам о заявке
+                        userService.findAllIdByAdmin(true)) {
+                    sendMessage(adminChatId, msgService.get("message.sendAdminInviteRequest"));
+                }
                 editMessage(chatId, messageId, msgService.get("message.inviteHBSent"));
             }catch (Exception e){
                 log.error(e.getMessage());

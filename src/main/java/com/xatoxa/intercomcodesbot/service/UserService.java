@@ -5,6 +5,7 @@ import com.xatoxa.intercomcodesbot.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -49,8 +50,24 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public String findAllByAdmin(boolean isAdmin){
-        List<User> users = userRepository.findAllByAdmin(isAdmin);
+    public List<User> findAllByAdmin(boolean isAdmin){
+        return userRepository.findAllByAdmin(isAdmin);
+    }
+
+    public List<Long> findAllIdByAdmin(boolean isAdmin){
+        List<Long> ids = new ArrayList<>();
+        List<User> users = findAllByAdmin(isAdmin);
+
+        for (User user:
+             users) {
+            ids.add(user.getChatId());
+        }
+
+        return ids;
+    }
+
+    public String findAllByAdminToString(boolean isAdmin){
+        List<User> users = findAllByAdmin(isAdmin);
         StringBuilder stB = new StringBuilder();
         if (users.size() != 0) {
             for (User user :
