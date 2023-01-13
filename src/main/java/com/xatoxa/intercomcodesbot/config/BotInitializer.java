@@ -1,6 +1,6 @@
 package com.xatoxa.intercomcodesbot.config;
 
-import com.xatoxa.intercomcodesbot.controller.BotController;
+import com.xatoxa.intercomcodesbot.bot.Bot;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -14,13 +14,13 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 @Slf4j
 public class BotInitializer {
     @Autowired
-    BotController botController;
+    Bot bot;
 
     @EventListener({ContextRefreshedEvent.class})
     public void init() throws TelegramApiException{
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
         try{
-            telegramBotsApi.registerBot(botController);
+            telegramBotsApi.registerBot(bot);
         }catch (TelegramApiException e){
             log.error(e.getMessage());
         }
