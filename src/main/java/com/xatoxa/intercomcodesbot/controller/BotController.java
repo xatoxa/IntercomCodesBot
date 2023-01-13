@@ -147,6 +147,8 @@ public class BotController extends TelegramLongPollingBot {
                             log.error(e.getMessage());
                         }
                         sendMessage(chatId, msgService.get("message.searchMode"));
+                        sendMessage(chatId, msgService.get("message.awaitingGeoOrKey"),
+                                getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
                         botState = BotState.SEARCH;
                     } else {
                         sendMessage(chatId, msgService.get("message.waitForConfirm"));
