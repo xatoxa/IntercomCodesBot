@@ -6,8 +6,10 @@ import com.xatoxa.intercomcodesbot.entity.*;
 import com.xatoxa.intercomcodesbot.service.LocaleMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.time.LocalDateTime;
 
@@ -300,6 +302,15 @@ public class CallbackHandler extends Handler{
         } else{ //обработать другие кнопки
             botState = userDataCache.getUsersCurrentBotState(userId);
         }
+        answer(update.getCallbackQuery().getId());
         userDataCache.setUsersCurrentBotState(userId, botState);
+    }
+
+    private void answer(String id) {
+        try {
+            bot.execute(new AnswerCallbackQuery(id));
+        } catch (TelegramApiException e) {
+            log.error(e.getMessage());
+        }
     }
 }
