@@ -454,6 +454,7 @@ public class BotController extends TelegramLongPollingBot {
                         User user = userService.findById(Long.valueOf(msgText));
                         user.setAdmin(true);
                         userService.save(user);
+                        sendMessage(user.getChatId(), msgService.get("message.youNowAdmin"));
                         sendMessage(chatId, user + "\n " + msgService.get("message.userToAdmin"));
                     }catch (Exception e){
                         log.error(e.getMessage());
@@ -466,6 +467,7 @@ public class BotController extends TelegramLongPollingBot {
                         User user = userService.findById(Long.valueOf(msgText));
                         user.setAdmin(false);
                         userService.save(user);
+                        sendMessage(user.getChatId(), msgService.get("message.youDemotedAdmin"));
                         sendMessage(chatId, user + "\n" + msgService.get("message.adminToUser"));
                     }catch (Exception e){
                         log.error(e.getMessage());
