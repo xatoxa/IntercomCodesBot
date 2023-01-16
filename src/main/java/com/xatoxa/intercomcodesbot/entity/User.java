@@ -39,7 +39,7 @@ public class User {
                 this.username == null ?
                         "[" + this.id + "](tg://user?id=" + this.id + ")"
                         : "@" + this.username;
-        return this.id + " " + link + " " + (this.firstName == null ? "" : this.firstName) + " " +
-                (this.lastName == null ? "" : this.lastName);
+        return this.id + " " + link + " " + (this.firstName == null ? "" : this.firstName + " ") +
+                (this.lastName == null ? "" : this.lastName + " ");
     }
 }
