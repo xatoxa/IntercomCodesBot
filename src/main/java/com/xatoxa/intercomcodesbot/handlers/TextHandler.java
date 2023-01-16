@@ -25,6 +25,7 @@ public class TextHandler extends Handler{
 
         switch (msgText) {
             case "/start" -> {
+                sendMessage(chatId, msgService.get("message.start"));
                 if (!userService.existsById(userId)) {
                     sendMessage(chatId, msgService.get("message.sendInviteRequest"),
                             getMarkup(getKeyboardRow(msgService.get("button.sendInviteRequest"), BUTTON_INVITE_REQUEST)));
