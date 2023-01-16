@@ -350,6 +350,17 @@ public class TextHandler extends Handler{
                         user.setAdmin(true);
                         userService.save(user);
                         sendMessage(user.getChatId(), msgService.get("message.youNowAdmin"));
+
+                        for (Long adminChatId:   //сообщение всем админам
+                                userService.findAllIdByAdmin(true)) {
+                            if (adminChatId.equals(userId)) continue;
+                            sendMessage(adminChatId,
+                                    msgService.get("message.user") +
+                                            user +
+                                            msgService.get("message.userToAdminForAdmins") +
+                                            userService.findById(userId));
+                        }
+
                         sendMessage(chatId, user + "\n " + msgService.get("message.userToAdmin"));
                     }catch (Exception e){
                         log.error(e.getMessage());
@@ -363,6 +374,17 @@ public class TextHandler extends Handler{
                         user.setAdmin(false);
                         userService.save(user);
                         sendMessage(user.getChatId(), msgService.get("message.youDemotedAdmin"));
+
+                        for (Long adminChatId:   //сообщение всем админам
+                                userService.findAllIdByAdmin(true)) {
+                            if (adminChatId.equals(userId)) continue;
+                            sendMessage(adminChatId,
+                                    msgService.get("message.admin") +
+                                            user +
+                                            msgService.get("message.adminToUserForAdmins") +
+                                            userService.findById(userId));
+                        }
+
                         sendMessage(chatId, user + "\n" + msgService.get("message.adminToUser"));
                     }catch (Exception e){
                         log.error(e.getMessage());

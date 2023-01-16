@@ -264,7 +264,9 @@ public class CallbackHandler extends Handler{
 
                 for (Long adminChatId:   //сообщение всем админам о заявке
                         userService.findAllIdByAdmin(true)) {
-                    sendMessage(adminChatId, msgService.get("message.sendAdminInviteRequest"));
+                    sendMessage(adminChatId,
+                            msgService.get("message.sendAdminInviteRequest") + "\n" +
+                            msgService.get("message.invitations") + inviteService.countAll());
                 }
                 editMessage(chatId, messageId, msgService.get("message.inviteHBSent"));
             }catch (Exception e){
@@ -279,8 +281,28 @@ public class CallbackHandler extends Handler{
                 user.setEnabled(true);
                 inviteService.delete(invite);
                 userService.save(user);
+
                 sendMessage(user.getChatId(), msgService.get("message.acceptInvite"));
-                editMessage(chatId, messageId, msgService.get("message.confirm"));
+
+                for (Long adminChatId:   //сообщение всем админам
+                        userService.findAllIdByAdmin(true)) {
+                    if (adminChatId.equals(userId)) continue;
+                    sendMessage(adminChatId,
+                            msgService.get("message.user") +
+                                    user +
+                                    msgService.get("message.acceptByAdmin") +
+                                    userService.findById(userId));
+                }
+
+                String nextInvites = "";
+                Long countInvites = inviteService.countAll();
+                if (countInvites > 0)
+                    nextInvites =
+                            msgService.get("message.remains") +
+                            countInvites +
+                            msgService.get("message.continueSolveInvites");
+                editMessage(chatId, messageId,
+                        msgService.get("message.acceptUser") + "\n" + nextInvites);
             }catch (Exception e){
                 log.error(e.getMessage());
                 sendMessage(chatId, msgService.get("message.error") + e.getMessage());
@@ -292,8 +314,28 @@ public class CallbackHandler extends Handler{
                 User user = invite.getUser();
                 inviteService.delete(invite);
                 userService.delete(user);
+
                 sendMessage(user.getChatId(), msgService.get("message.rejectInvite"));
-                editMessage(chatId, messageId, msgService.get("message.confirm"));
+
+                for (Long adminChatId:   //сообщение всем админам
+                        userService.findAllIdByAdmin(true)) {
+                    if (adminChatId.equals(userId)) continue;
+                    sendMessage(adminChatId,
+                            msgService.get("message.user") +
+                                    user +
+                                    msgService.get("message.rejectByAdmin") +
+                                    userService.findById(userId));
+                }
+
+                String nextInvites = "";
+                Long countInvites = inviteService.countAll();
+                if (countInvites > 0)
+                    nextInvites =
+                            msgService.get("message.remains") +
+                                    countInvites +
+                                    msgService.get("message.continueSolveInvites");
+                editMessage(chatId, messageId,
+                        msgService.get("message.rejectUser") + "\n" + nextInvites);
             }catch (Exception e){
                 log.error(e.getMessage());
                 sendMessage(chatId, msgService.get("message.error") + e.getMessage());
