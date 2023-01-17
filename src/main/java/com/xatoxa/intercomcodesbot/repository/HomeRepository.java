@@ -17,6 +17,6 @@ public interface HomeRepository extends JpaRepository<Home, Long> {
             @Param("startLat") Double startLat,
             @Param("endLat") Double endLat);
 
-    @Query("SELECT h FROM homes h WHERE CONCAT(h.street, ' ', h.number) LIKE %:keyword%")
+    @Query("SELECT h FROM homes h WHERE lower(CONCAT(h.street, ' ', h.number)) LIKE lower(concat('%', :keyword,'%'))")
     List<Home> findAllBy(@Param("keyword") String keyword);
 }
