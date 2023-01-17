@@ -37,6 +37,7 @@ public class HomeService {
     }
 
     public List<Home> findAllBy(String keyword){
+        keyword = keyword.replaceAll("\\p{Punct}", "");
         return homeRepository.findAllBy(keyword);
     }
 
