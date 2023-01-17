@@ -431,6 +431,19 @@ public class TextHandler extends Handler{
                     }
                     botState = BotState.DEFAULT;
                     userDataCache.setUsersCurrentBotState(userId, botState);
+                } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.DELETE) &&
+                        (userService.isAdmin(userId) || bot.getOwnerId().equals(userId) )) {
+                    List<Home> homes = homeService.findAllBy(msgText);
+                    if (homes.size() == 0){
+                        sendMessage(chatId, msgService.get("message.notFound"));
+                        botState = BotState.DEFAULT;
+                    }else {
+                        sendMessage(chatId, msgService.get("message.selectHome"),
+                                getMarkup(homes, BUTTON_DELETE_HOME,
+                                        getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                        botState = BotState.DELETE_HOME;
+                    }
+                    userDataCache.setUsersCurrentBotState(userId, botState);
                 } else {
                     sendMessage(chatId, msgService.get("message.default"));
                     botState = userDataCache.getUsersCurrentBotState(userId);
