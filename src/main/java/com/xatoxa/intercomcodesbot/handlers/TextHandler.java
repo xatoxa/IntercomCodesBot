@@ -75,7 +75,11 @@ public class TextHandler extends Handler{
             }
             case "/delete" -> {
                 if (userService.isEnabled(userId)) {
-                    sendMessage(chatId, msgService.get("message.awaitingGeo"),
+                    String forAdmin = "";
+                    if (userService.isAdmin(userId)){
+                        forAdmin = msgService.get("message.adminDeleteHome");
+                    }
+                    sendMessage(chatId, msgService.get("message.awaitingGeo") + forAdmin,
                             getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
                     botState = BotState.DELETE;
                 } else {
