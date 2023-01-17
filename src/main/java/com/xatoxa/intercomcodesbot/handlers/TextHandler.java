@@ -224,6 +224,21 @@ public class TextHandler extends Handler{
                     botState = BotState.DEFAULT;
                 }
             }
+            case "/delete_user" -> {
+                if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
+                    if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
+                        sendMessage(chatId, msgService.get("message.waitId"),
+                                getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                        botState = BotState.DELETE_USER;
+                    } else{
+                        sendMessage(chatId, msgService.get("message.notAdmin"));
+                        botState = BotState.DEFAULT;
+                    }
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"));
+                    botState = BotState.DEFAULT;
+                }
+            }
             default -> {
                 if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_HOME)){
                     CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
@@ -387,6 +402,29 @@ public class TextHandler extends Handler{
                         }
 
                         sendMessage(chatId, user + "\n" + msgService.get("message.adminToUser"));
+                    }catch (Exception e){
+                        log.error(e.getMessage());
+                        sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+                    }
+                    botState = BotState.DEFAULT;
+                    userDataCache.setUsersCurrentBotState(userId, botState);
+                } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.DELETE_USER)) {
+                    try {
+                        User user = userService.findById(Long.valueOf(msgText));
+                        userService.delete(user);
+                        sendMessage(user.getChatId(), msgService.get("message.youDeletedUser"));
+
+                        for (Long adminChatId:   //сообщение всем админам
+                                userService.findAllIdByAdmin(true)) {
+                            if (adminChatId.equals(userId)) continue;
+                            sendMessage(adminChatId,
+                                    msgService.get("message.user") +
+                                            user +
+                                            msgService.get("message.adminDeleteUser") +
+                                            userService.findById(userId));
+                        }
+
+                        sendMessage(chatId, user + "\n" + msgService.get("message.deleteUser"));
                     }catch (Exception e){
                         log.error(e.getMessage());
                         sendMessage(chatId, msgService.get("message.error") + e.getMessage());
