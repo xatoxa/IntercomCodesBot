@@ -21,5 +21,6 @@ public enum BotState {
     SELECT_HOME,
     SELECT_ENTRANCE,
     MAKE_ADMIN,
-    DEMOTE_ADMIN
+    DEMOTE_ADMIN,
+    DELETE_USER
 }
