@@ -66,6 +66,9 @@ public abstract class Handler {
     @Autowired
     UserInviteService inviteService;
 
+    @Autowired
+    GroupService groupService;
+
     public abstract void handle(Update update, LocaleMessageService msgService, Bot bot);
 
     private void executeSendMessage(SendMessage message, Bot bot){

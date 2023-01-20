@@ -253,7 +253,7 @@ public class TextHandler extends Handler{
                 }
                 botState = userDataCache.getUsersCurrentBotState(userId);
             }
-            case "/add_chat" -> {
+            case "/add_group" -> {
                 if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
                     if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
                         sendMessage(chatId, "Введи id группы и её название через пробел.\n" +
@@ -270,13 +270,27 @@ public class TextHandler extends Handler{
                     botState = BotState.DEFAULT;
                 }
             }
-            case "/delete_chat" -> {
+            case "/delete_group" -> {
                 if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
                     if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
                         sendMessage(chatId, "Введи id группы и её название через пробел. \n" +
                                         "Чтобы узнать id группы, скопируй следующую команду и отправь её боту в группе. \n" +
                                         "/get_chat_id@IntercomCodesBot",
                                 getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
+                        botState = BotState.DELETE_CHAT;
+                    } else{
+                        sendMessage(chatId, msgService.get("message.notAdmin"), bot);
+                        botState = BotState.DEFAULT;
+                    }
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"), bot);
+                    botState = BotState.DEFAULT;
+                }
+            }
+            case "/groups" -> {
+                if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
+                    if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
+                        sendMessage(chatId, groupService.findAllToString(), bot);
                         botState = BotState.DELETE_CHAT;
                     } else{
                         sendMessage(chatId, msgService.get("message.notAdmin"), bot);
@@ -481,8 +495,10 @@ public class TextHandler extends Handler{
                     userDataCache.setUsersCurrentBotState(userId, botState);
                 } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_CHAT)) {
                     try {
-
-                        sendMessage(chatId,  "Чат добавлен заглушка", bot);
+                        Group group = new Group(Long.valueOf(msgText.split(" ")[0]),
+                                msgText.substring(msgText.indexOf(" ")));
+                        groupService.save(group);
+                        sendMessage(chatId,  msgService.get("message.addGroup") + group, bot);
                     }catch (Exception e){
                         log.error(e.getMessage());
                         sendMessage(chatId, msgService.get("message.error") + e.getMessage(), bot);
@@ -491,8 +507,9 @@ public class TextHandler extends Handler{
                     userDataCache.setUsersCurrentBotState(userId, botState);
                 } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.DELETE_CHAT)) {
                     try {
-
-                        sendMessage(chatId, "Чат удалён заглушка", bot);
+                        Group group = groupService.findById(Long.valueOf(msgText));
+                        groupService.delete(group);
+                        sendMessage(chatId, msgService.get("message.deleteGroup") + group, bot);
                     }catch (Exception e){
                         log.error(e.getMessage());
                         sendMessage(chatId, msgService.get("message.error") + e.getMessage(), bot);
