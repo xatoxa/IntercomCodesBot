@@ -247,18 +247,16 @@ public class TextHandler extends Handler{
                     botState = BotState.DEFAULT;
                 }
             }
-            case "/get_chat_id@IntercomCodesBot" -> {
+            case "/get_group_id@IntercomCodesBot" -> {
                 if (bot.getOwnerId().equals(userId)){
-                    sendMessage(chatId, String.valueOf(chatId), bot);
+                    sendMessage(chatId, chatId + " " + update.getMessage().getChat().getTitle(), bot);
                 }
                 botState = userDataCache.getUsersCurrentBotState(userId);
             }
             case "/add_group" -> {
                 if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
                     if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
-                        sendMessage(chatId, "Введи id группы и её название через пробел.\n" +
-                                        "Чтобы узнать id группы, скопируй следующую команду и отправь её боту в группе.\n" +
-                                        "/get_chat_id@IntercomCodesBot",
+                        sendMessage(chatId, msgService.get("message.waitIdGroup"),
                                 getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
                         botState = BotState.ADD_CHAT;
                     } else{
@@ -273,9 +271,7 @@ public class TextHandler extends Handler{
             case "/delete_group" -> {
                 if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
                     if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
-                        sendMessage(chatId, "Введи id группы и её название через пробел. \n" +
-                                        "Чтобы узнать id группы, скопируй следующую команду и отправь её боту в группе. \n" +
-                                        "/get_chat_id@IntercomCodesBot",
+                        sendMessage(chatId, msgService.get("message.waitIdGroup"),
                                 getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
                         botState = BotState.DELETE_CHAT;
                     } else{
