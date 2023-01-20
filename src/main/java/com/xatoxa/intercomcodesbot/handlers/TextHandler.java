@@ -247,6 +247,46 @@ public class TextHandler extends Handler{
                     botState = BotState.DEFAULT;
                 }
             }
+            case "/get_chat_id@IntercomCodesBot" -> {
+                if (bot.getOwnerId().equals(userId)){
+                    sendMessage(chatId, String.valueOf(chatId), bot);
+                }
+                botState = userDataCache.getUsersCurrentBotState(userId);
+            }
+            case "/add_chat" -> {
+                if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
+                    if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
+                        sendMessage(chatId, "Введи id группы и её название через пробел.\n" +
+                                        "Чтобы узнать id группы, скопируй следующую команду и отправь её боту в группе.\n" +
+                                        "/get_chat_id@IntercomCodesBot",
+                                getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
+                        botState = BotState.ADD_CHAT;
+                    } else{
+                        sendMessage(chatId, msgService.get("message.notAdmin"), bot);
+                        botState = BotState.DEFAULT;
+                    }
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"), bot);
+                    botState = BotState.DEFAULT;
+                }
+            }
+            case "/delete_chat" -> {
+                if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
+                    if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
+                        sendMessage(chatId, "Введи id группы и её название через пробел. \n" +
+                                        "Чтобы узнать id группы, скопируй следующую команду и отправь её боту в группе. \n" +
+                                        "/get_chat_id@IntercomCodesBot",
+                                getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
+                        botState = BotState.DELETE_CHAT;
+                    } else{
+                        sendMessage(chatId, msgService.get("message.notAdmin"), bot);
+                        botState = BotState.DEFAULT;
+                    }
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"), bot);
+                    botState = BotState.DEFAULT;
+                }
+            }
             default -> {
                 if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_HOME)){
                     CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
@@ -433,6 +473,26 @@ public class TextHandler extends Handler{
                         }
 
                         sendMessage(chatId, user + "\n" + msgService.get("message.deleteUser"), bot);
+                    }catch (Exception e){
+                        log.error(e.getMessage());
+                        sendMessage(chatId, msgService.get("message.error") + e.getMessage(), bot);
+                    }
+                    botState = BotState.DEFAULT;
+                    userDataCache.setUsersCurrentBotState(userId, botState);
+                } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_CHAT)) {
+                    try {
+
+                        sendMessage(chatId,  "Чат добавлен заглушка", bot);
+                    }catch (Exception e){
+                        log.error(e.getMessage());
+                        sendMessage(chatId, msgService.get("message.error") + e.getMessage(), bot);
+                    }
+                    botState = BotState.DEFAULT;
+                    userDataCache.setUsersCurrentBotState(userId, botState);
+                } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.DELETE_CHAT)) {
+                    try {
+
+                        sendMessage(chatId, "Чат удалён заглушка", bot);
                     }catch (Exception e){
                         log.error(e.getMessage());
                         sendMessage(chatId, msgService.get("message.error") + e.getMessage(), bot);

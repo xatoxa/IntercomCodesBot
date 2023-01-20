@@ -22,5 +22,7 @@ public enum BotState {
     SELECT_ENTRANCE,
     MAKE_ADMIN,
     DEMOTE_ADMIN,
-    DELETE_USER
+    DELETE_USER,
+    ADD_CHAT,
+    DELETE_CHAT
 }
