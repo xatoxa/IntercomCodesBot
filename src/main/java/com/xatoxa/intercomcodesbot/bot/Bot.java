@@ -89,14 +89,14 @@ public class Bot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
             if (update.getMessage().hasText()) {
-                textHandler.handle(update, msgService);
+                textHandler.handle(update, msgService, this);
             }
             else if (update.getMessage().hasLocation()) {
-                locationHandler.handle(update, msgService);
+                locationHandler.handle(update, msgService, this);
             }
         }
         else if (update.hasCallbackQuery()) {
-            callbackHandler.handle(update, msgService);
+            callbackHandler.handle(update, msgService, this);
         }
     }
 }

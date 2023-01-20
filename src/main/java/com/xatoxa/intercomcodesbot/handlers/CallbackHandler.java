@@ -1,5 +1,6 @@
 package com.xatoxa.intercomcodesbot.handlers;
 
+import com.xatoxa.intercomcodesbot.bot.Bot;
 import com.xatoxa.intercomcodesbot.botapi.BotState;
 import com.xatoxa.intercomcodesbot.cache.CodeCache;
 import com.xatoxa.intercomcodesbot.entity.*;
@@ -18,7 +19,7 @@ import java.time.LocalDateTime;
 @Slf4j
 public class CallbackHandler extends Handler{
     @Override
-    public void handle(Update update, LocaleMessageService msgService){
+    public void handle(Update update, LocaleMessageService msgService, Bot bot){
         BotState botState;
         long messageId = update.getCallbackQuery().getMessage().getMessageId();
         long chatId = update.getCallbackQuery().getMessage().getChatId();
@@ -27,8 +28,8 @@ public class CallbackHandler extends Handler{
         CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
 
         if (callbackData.equals(BUTTON_CANCEL)) {
-            editMessage(chatId, messageId, msgService.get("message.cancelled"));
-            sendMessage(chatId, msgService.get("message.awaitingCommand"));
+            editMessage(chatId, messageId, msgService.get("message.cancelled"), bot);
+            sendMessage(chatId, msgService.get("message.awaitingCommand"), bot);
             botState = BotState.DEFAULT;
             userDataCache.removeUsersCurrentCodeCache(userId);
         } else if (callbackData.equals(BUTTON_ACCEPT_ADD)) {
@@ -43,24 +44,24 @@ public class CallbackHandler extends Handler{
                         userId, update.getCallbackQuery().getFrom().getUserName(), "+ " + code.getInverseAddress(), LocalDateTime.now());
                 userHistoryService.save(userHistory);
 
-                editMessage(chatId, messageId, msgService.get("message.confirm"));
+                editMessage(chatId, messageId, msgService.get("message.confirm"), bot);
             }catch (Exception e){
                 log.error(e.getMessage());
-                sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+                sendMessage(chatId, msgService.get("message.error") + e.getMessage(), bot);
             }
 
-            sendMessage(chatId, msgService.get("message.addingMode"));
+            sendMessage(chatId, msgService.get("message.addingMode"), bot);
             botState = BotState.ADD;
             userDataCache.removeUsersCurrentCodeCache(userId);
         } else if (callbackData.equals(BUTTON_NOT_FOUND_HOME)) {
-            editMessage(chatId, messageId, msgService.get("message.addNew"));
+            editMessage(chatId, messageId, msgService.get("message.addNew"), bot);
             sendMessage(chatId, msgService.get("message.inputHome"),
-                    getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                    getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
             botState = BotState.ADD_HOME;
         } else if (callbackData.equals(BUTTON_NOT_FOUND_ENTRANCE)) {
-            editMessage(chatId, messageId, msgService.get("message.addNew"));
+            editMessage(chatId, messageId, msgService.get("message.addNew"), bot);
             sendMessage(chatId, msgService.get("message.inputEntrance"),
-                    getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                    getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
             botState = BotState.ADD_ENTRANCE;
         } else if (callbackData.contains(BUTTON_SELECT_HOME)) {
             Home home = homeService.findById(Long.valueOf(callbackData.split("&")[1]));
@@ -68,28 +69,28 @@ public class CallbackHandler extends Handler{
             userDataCache.setUsersCurrentCodeCache(userId, codeCache);
             if (home.getEntrances().size() == 0){
                 sendMessage(chatId, msgService.get("message.inputEntrance"),
-                        getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                        getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
                 botState = BotState.ADD_ENTRANCE;
             }else {
                 sendMessage(chatId, msgService.get("message.selectEntrance"),
                         getMarkup(home.getEntrances(), BUTTON_SELECT_ENTRANCE,
                                 getKeyboardRow(msgService.get("button.addNew"), BUTTON_NOT_FOUND_ENTRANCE),
-                                getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                                getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
                 botState = BotState.SELECT_ENTRANCE;
             }
         } else if (callbackData.contains(BUTTON_SEARCH_HOME)) {
             Home home = homeService.findById(Long.valueOf(callbackData.split("&")[1]));
             codeCache.setHome(home);
             if (home.getEntrances().size() == 0){
-                sendMessage(chatId, msgService.get("message.notFoundEntrance"));
+                sendMessage(chatId, msgService.get("message.notFoundEntrance"), bot);
                 botState = BotState.SEARCH;
             } else if (home.getEntrances().size() > MAX_ENTRANCES) {
                 sendMessage(chatId, msgService.get("message.selectEntrance"),
                         getMarkup(home.getEntrances(), BUTTON_SEARCH_ENTRANCE,
-                                getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                                getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
                 botState = BotState.SEARCH_ENTRANCE;
             } else {
-                sendMessage(chatId, home.toString());
+                sendMessage(chatId, home.toString(), bot);
                 botState = BotState.SEARCH;
             }
         } else if (callbackData.contains(BUTTON_SEARCH_ENTRANCE)) {
@@ -97,9 +98,9 @@ public class CallbackHandler extends Handler{
             codeCache.setEntrance(entrance);
             userDataCache.setUsersCurrentCodeCache(userId, codeCache);
             if (entrance.getCodes().size() == 0){
-                sendMessage(chatId, msgService.get("message.notFoundEntrance"));
+                sendMessage(chatId, msgService.get("message.notFoundEntrance"), bot);
             }else {
-                sendMessage(chatId, entrance.getTextCodes());
+                sendMessage(chatId, entrance.getTextCodes(), bot);
             }
             botState = BotState.SEARCH;
         } else if (callbackData.contains(BUTTON_SELECT_ENTRANCE)) {
@@ -108,12 +109,12 @@ public class CallbackHandler extends Handler{
             userDataCache.setUsersCurrentCodeCache(userId, codeCache);
             if (entrance.getCodes().size() == 0){
                 sendMessage(chatId, msgService.get("message.inputCode"),
-                        getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                        getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
             }else {
                 sendMessage(
                         chatId,
                         msgService.get("message.codeAlreadyExists") + entrance.getTextCodes(),
-                        getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                        getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
             }
             botState = BotState.ADD_CODE;
         } else if (callbackData.contains(BUTTON_DELETE_HOME)) {
@@ -137,7 +138,7 @@ public class CallbackHandler extends Handler{
                         getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL),
                         getKeyboardRow(kbdText, BUTTON_ACCEPT_DELETE_HOME + "&" + home.getId()));
             }
-            sendMessage(chatId, msgText + home.getAddress(), markup);
+            sendMessage(chatId, msgText + home.getAddress(), markup, bot);
         } else if (callbackData.contains(BUTTON_DELETE_ENTRANCE)) {
             Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[1]));
             String msgText, kbdText;
@@ -157,7 +158,7 @@ public class CallbackHandler extends Handler{
                         getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL),
                         getKeyboardRow(kbdText, BUTTON_ACCEPT_DELETE_ENTRANCE + "&" + entrance.getId()));
             }
-            sendMessage(chatId, msgText + entrance.getAddress(), markup);
+            sendMessage(chatId, msgText + entrance.getAddress(), markup, bot);
 
         } else if (callbackData.contains(BUTTON_ACCEPT_DELETE_HOME)) {
             Home home = homeService.findById(Long.valueOf(callbackData.split("&")[1]));
@@ -167,12 +168,12 @@ public class CallbackHandler extends Handler{
                 homeService.delete(home);
                 userHistoryService.save(userHistory);
 
-                editMessage(chatId, messageId, msgService.get("message.deleted"));
+                editMessage(chatId, messageId, msgService.get("message.deleted"), bot);
             }catch (Exception e){
                 log.error(e.getMessage());
-                sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+                sendMessage(chatId, msgService.get("message.error") + e.getMessage(), bot);
             }
-            sendMessage(chatId, msgService.get("message.awaitingCommand"));
+            sendMessage(chatId, msgService.get("message.awaitingCommand"), bot);
             botState = BotState.DEFAULT;
         } else if (callbackData.contains(BUTTON_ACCEPT_DELETE_ENTRANCE)) {
             Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[1]));
@@ -186,12 +187,12 @@ public class CallbackHandler extends Handler{
                 entranceService.delete(entrance);
                 userHistoryService.save(userHistory);
 
-                editMessage(chatId, messageId, msgService.get("message.deleted"));
+                editMessage(chatId, messageId, msgService.get("message.deleted"), bot);
             }catch (Exception e){
                 log.error(e.getMessage());
-                sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+                sendMessage(chatId, msgService.get("message.error") + e.getMessage(), bot);
             }
-            sendMessage(chatId, msgService.get("message.awaitingCommand"));
+            sendMessage(chatId, msgService.get("message.awaitingCommand"), bot);
             botState = BotState.DEFAULT;
         } else if (callbackData.contains(BUTTON_DELETE_CODE)) {
             IntercomCode code = intercomCodeService.findById(Long.valueOf(callbackData.split("&")[1]));
@@ -204,12 +205,12 @@ public class CallbackHandler extends Handler{
                 entranceService.save(entrance);
                 intercomCodeService.delete(code);
                 userHistoryService.save(userHistory);
-                editMessage(chatId, messageId, msgService.get("message.deleted"));
+                editMessage(chatId, messageId, msgService.get("message.deleted"), bot);
             }catch (Exception e){
                 log.error(e.getMessage());
-                sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+                sendMessage(chatId, msgService.get("message.error") + e.getMessage(), bot);
             }
-            sendMessage(chatId, msgService.get("message.awaitingCommand"));
+            sendMessage(chatId, msgService.get("message.awaitingCommand"), bot);
             botState = BotState.DEFAULT;
         } else if (callbackData.contains(BUTTON_EDIT_HOME)) {
             Home home = homeService.findById(Long.valueOf(callbackData.split("&")[1]));
@@ -227,7 +228,7 @@ public class CallbackHandler extends Handler{
                 botState = BotState.EDIT_HOME;
                 markup = getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL));
             }
-            sendMessage(chatId, msgText + home.getAddress(), markup);
+            sendMessage(chatId, msgText + home.getAddress(), markup, bot);
         } else if (callbackData.contains(BUTTON_EDIT_ENTRANCE)) {
             Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[1]));
             codeCache.setEntrance(entrance);
@@ -244,14 +245,14 @@ public class CallbackHandler extends Handler{
                 botState = BotState.EDIT_ENTRANCE;
                 markup = getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL));
             }
-            sendMessage(chatId, msgText + entrance.getAddress(), markup);
+            sendMessage(chatId, msgText + entrance.getAddress(), markup, bot);
         } else if (callbackData.contains(BUTTON_EDIT_CODE)) {
             IntercomCode code = intercomCodeService.findById(Long.valueOf(callbackData.split("&")[1]));
             codeCache.setCode(code);
             userDataCache.setUsersCurrentCodeCache(userId, codeCache);
             botState = BotState.EDIT_CODE;
             sendMessage(chatId, msgService.get("message.editCode") + code.getAddress(),
-                    getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)));
+                    getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
         } else if (callbackData.contains(BUTTON_INVITE_REQUEST)) {
             try {
                 User user = new User(userId, chatId,
@@ -266,12 +267,12 @@ public class CallbackHandler extends Handler{
                         userService.findAllIdByAdmin(true)) {
                     sendMessage(adminChatId,
                             msgService.get("message.sendAdminInviteRequest") + "\n" +
-                            msgService.get("message.invitations") + inviteService.countAll());
+                            msgService.get("message.invitations") + inviteService.countAll(), bot);
                 }
-                editMessage(chatId, messageId, msgService.get("message.inviteHBSent"));
+                editMessage(chatId, messageId, msgService.get("message.inviteHBSent"), bot);
             }catch (Exception e){
                 log.error(e.getMessage());
-                sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+                sendMessage(chatId, msgService.get("message.error") + e.getMessage(), bot);
             }
             botState = BotState.DEFAULT;
         } else if (callbackData.contains(BUTTON_ACCEPT_USR)) {
@@ -282,7 +283,7 @@ public class CallbackHandler extends Handler{
                 inviteService.delete(invite);
                 userService.save(user);
 
-                sendMessage(user.getChatId(), msgService.get("message.acceptInvite"));
+                sendMessage(user.getChatId(), msgService.get("message.acceptInvite"), bot);
 
                 for (Long adminChatId:   //сообщение всем админам
                         userService.findAllIdByAdmin(true)) {
@@ -291,7 +292,7 @@ public class CallbackHandler extends Handler{
                             msgService.get("message.user") +
                                     user +
                                     msgService.get("message.acceptByAdmin") +
-                                    userService.findById(userId));
+                                    userService.findById(userId), bot);
                 }
 
                 String nextInvites = "";
@@ -302,10 +303,10 @@ public class CallbackHandler extends Handler{
                             countInvites +
                             msgService.get("message.continueSolveInvites");
                 editMessage(chatId, messageId,
-                        msgService.get("message.acceptUser") + "\n" + nextInvites);
+                        msgService.get("message.acceptUser") + "\n" + nextInvites, bot);
             }catch (Exception e){
                 log.error(e.getMessage());
-                sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+                sendMessage(chatId, msgService.get("message.error") + e.getMessage(), bot);
             }
             botState = BotState.DEFAULT;
         } else if (callbackData.contains(BUTTON_REJECT_USR)) {
@@ -315,7 +316,7 @@ public class CallbackHandler extends Handler{
                 inviteService.delete(invite);
                 userService.delete(user);
 
-                sendMessage(user.getChatId(), msgService.get("message.rejectInvite"));
+                sendMessage(user.getChatId(), msgService.get("message.rejectInvite"), bot);
 
                 for (Long adminChatId:   //сообщение всем админам
                         userService.findAllIdByAdmin(true)) {
@@ -324,7 +325,7 @@ public class CallbackHandler extends Handler{
                             msgService.get("message.user") +
                                     user +
                                     msgService.get("message.rejectByAdmin") +
-                                    userService.findById(userId));
+                                    userService.findById(userId), bot);
                 }
 
                 String nextInvites = "";
@@ -335,20 +336,20 @@ public class CallbackHandler extends Handler{
                                     countInvites +
                                     msgService.get("message.continueSolveInvites");
                 editMessage(chatId, messageId,
-                        msgService.get("message.rejectUser") + "\n" + nextInvites);
+                        msgService.get("message.rejectUser") + "\n" + nextInvites, bot);
             }catch (Exception e){
                 log.error(e.getMessage());
-                sendMessage(chatId, msgService.get("message.error") + e.getMessage());
+                sendMessage(chatId, msgService.get("message.error") + e.getMessage(), bot);
             }
             botState = BotState.DEFAULT;
         } else{ //обработать другие кнопки
             botState = userDataCache.getUsersCurrentBotState(userId);
         }
-        answer(update.getCallbackQuery().getId());
+        answer(update.getCallbackQuery().getId(), bot);
         userDataCache.setUsersCurrentBotState(userId, botState);
     }
 
-    private void answer(String id) {
+    private void answer(String id, Bot bot) {
         try {
             bot.execute(new AnswerCallbackQuery(id));
         } catch (TelegramApiException e) {

@@ -46,9 +46,6 @@ public abstract class Handler {
     final static int MAX_ENTRANCES = 10;
 
     @Autowired
-    Bot bot;
-
-    @Autowired
     UserDataCache userDataCache;
 
     @Autowired
@@ -69,9 +66,9 @@ public abstract class Handler {
     @Autowired
     UserInviteService inviteService;
 
-    public abstract void handle(Update update, LocaleMessageService msgService);
+    public abstract void handle(Update update, LocaleMessageService msgService, Bot bot);
 
-    private void executeSendMessage(SendMessage message){
+    private void executeSendMessage(SendMessage message, Bot bot){
         try{
             bot.execute(message);
         }catch (TelegramApiException e){
@@ -79,37 +76,37 @@ public abstract class Handler {
         }
     }
 
-    protected void sendMessage(long chatId, String text){
+    protected void sendMessage(long chatId, String text, Bot bot){
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
-        executeSendMessage(message);
+        executeSendMessage(message, bot);
     }
 
-    protected void sendMessage(long chatId, String text, InlineKeyboardMarkup keyboardMarkup){
+    protected void sendMessage(long chatId, String text, InlineKeyboardMarkup keyboardMarkup, Bot bot){
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
         message.setReplyMarkup(keyboardMarkup);
-        executeSendMessage(message);
+        executeSendMessage(message, bot);
     }
 
-    protected void sendMessage(long chatId, String text, boolean isMarkdown){
+    protected void sendMessage(long chatId, String text, boolean isMarkdown, Bot bot){
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
         if (isMarkdown){
             message.disableWebPagePreview();
             message.setParseMode("Markdown");
         }
-        executeSendMessage(message);
+        executeSendMessage(message, bot);
     }
 
-    protected void sendMessage(long chatId, String text, InlineKeyboardMarkup keyboardMarkup, boolean isMarkdown){
+    protected void sendMessage(long chatId, String text, InlineKeyboardMarkup keyboardMarkup, boolean isMarkdown, Bot bot){
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
         message.setReplyMarkup(keyboardMarkup);
         if (isMarkdown){
             message.disableWebPagePreview();
             message.setParseMode("Markdown");
         }
-        executeSendMessage(message);
+        executeSendMessage(message, bot);
     }
 
-    protected void sendLocation(long chatId, Location location){
+    protected void sendLocation(long chatId, Location location, Bot bot){
         SendLocation message = new SendLocation();
         message.setChatId(chatId);
         message.setLatitude(location.getLatitude());
@@ -122,7 +119,7 @@ public abstract class Handler {
         }
     }
 
-    protected void editMessage(long chatId, long messageId, String text){
+    protected void editMessage(long chatId, long messageId, String text, Bot bot){
         EditMessageText message = new EditMessageText();
         message.setChatId(String.valueOf(chatId));
         message.setText(text);
