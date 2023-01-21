@@ -2,20 +2,27 @@ package com.xatoxa.intercomcodesbot.handlers;
 
 import com.xatoxa.intercomcodesbot.bot.Bot;
 import com.xatoxa.intercomcodesbot.cache.UserDataCache;
+import com.xatoxa.intercomcodesbot.entity.Group;
 import com.xatoxa.intercomcodesbot.entity.HomeAbstract;
 import com.xatoxa.intercomcodesbot.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMember;
+import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMemberCount;
 import org.telegram.telegrambots.meta.api.methods.send.SendLocation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Location;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
+import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMemberMember;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -191,5 +198,20 @@ public abstract class Handler {
         }catch (TelegramApiException e){
             log.error(e.getMessage());
         }
+    }
+
+    protected boolean isUserInGroups(Long userId, Bot bot){
+        List<Group> groups = groupService.findAll();
+        boolean isInGroup = false;
+
+        if (groups.size() > 0){
+            for (Group group:
+                 groups) {
+                GetChatMemberCount count = new GetChatMemberCount(String.valueOf(group.getId()));
+                
+            }
+        }
+
+        return isInGroup;
     }
 }

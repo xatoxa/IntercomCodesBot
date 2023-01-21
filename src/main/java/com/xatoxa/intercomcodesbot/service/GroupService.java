@@ -38,4 +38,8 @@ public class GroupService {
 
         return stB.toString();
     }
+
+    public List<Group> findAll(){
+        return groupRepository.findAll();
+    }
 }

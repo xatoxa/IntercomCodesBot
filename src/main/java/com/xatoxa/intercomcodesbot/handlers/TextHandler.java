@@ -250,7 +250,8 @@ public class TextHandler extends Handler{
             case "/get_group_id@IntercomCodesBot" -> {
                 if (bot.getOwnerId().equals(userId)){
                     deleteMessage(chatId, update.getMessage().getMessageId(), bot);
-                    sendMessage(chatId, chatId + " " + update.getMessage().getChat().getTitle(), bot);
+                    sendMessage(chatId, chatId + " " + update.getMessage().getChat().getTitle() +
+                            "\n" + isUserInGroups(userId, bot), bot);
                 }
                 botState = userDataCache.getUsersCurrentBotState(userId);
             }
