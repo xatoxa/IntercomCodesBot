@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendLocation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Location;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -180,5 +181,15 @@ public abstract class Handler {
         row.add(button);
 
         return row;
+    }
+
+    protected void deleteMessage(long chatId, long messageId,  Bot bot){
+        DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), (int)messageId);
+
+        try{
+            bot.execute(deleteMessage);
+        }catch (TelegramApiException e){
+            log.error(e.getMessage());
+        }
     }
 }
