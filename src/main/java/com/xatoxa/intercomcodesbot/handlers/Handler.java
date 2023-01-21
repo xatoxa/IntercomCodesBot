@@ -207,8 +207,16 @@ public abstract class Handler {
         if (groups.size() > 0){
             for (Group group:
                  groups) {
-                GetChatMemberCount count = new GetChatMemberCount(String.valueOf(group.getId()));
-                
+                try {
+                    ChatMember chatMember = bot.execute(new GetChatMember(group.getId().toString(), userId));
+                    if (chatMember != null) {
+                        isInGroup = true;
+                        break;
+                    }
+                } catch (TelegramApiException e) {
+                    throw new RuntimeException(e);
+                }
+
             }
         }
 

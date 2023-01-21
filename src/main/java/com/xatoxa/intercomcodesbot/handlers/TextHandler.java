@@ -26,30 +26,35 @@ public class TextHandler extends Handler{
 
         switch (msgText) {
             case "/start" -> {
-                sendMessage(chatId, msgService.get("message.start"), bot);
-                if (!userService.existsById(userId)) {
-                    sendMessage(chatId, msgService.get("message.sendInviteRequest"),
-                            getMarkup(
-                                    getKeyboardRow(msgService.get("button.sendInviteRequest"), BUTTON_INVITE_REQUEST))
-                            , bot);
-                    botState = BotState.DEFAULT;
-                } else {
-                    User user = userService.findById(userId);
-                    if (user.isEnabled()) {
-                        user.setChatId(chatId);
-                        try{
-                            userService.save(user);
-                        }catch (Exception e){
-                            log.error(e.getMessage());
-                        }
-                        sendMessage(chatId, msgService.get("message.searchMode"), bot);
-                        sendMessage(chatId, msgService.get("message.awaitingGeoOrKey"),
-                                getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
-                        botState = BotState.SEARCH;
-                    } else {
-                        sendMessage(chatId, msgService.get("message.waitForConfirm"), bot);
+                if (isUserInGroups(userId, bot)) {
+                    sendMessage(chatId, msgService.get("message.start"), bot);
+                    if (!userService.existsById(userId)) {
+                        sendMessage(chatId, msgService.get("message.sendInviteRequest"),
+                                getMarkup(
+                                        getKeyboardRow(msgService.get("button.sendInviteRequest"), BUTTON_INVITE_REQUEST))
+                                , bot);
                         botState = BotState.DEFAULT;
+                    } else {
+                        User user = userService.findById(userId);
+                        if (user.isEnabled()) {
+                            user.setChatId(chatId);
+                            try {
+                                userService.save(user);
+                            } catch (Exception e) {
+                                log.error(e.getMessage());
+                            }
+                            sendMessage(chatId, msgService.get("message.searchMode"), bot);
+                            sendMessage(chatId, msgService.get("message.awaitingGeoOrKey"),
+                                    getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
+                            botState = BotState.SEARCH;
+                        } else {
+                            sendMessage(chatId, msgService.get("message.waitForConfirm"), bot);
+                            botState = BotState.DEFAULT;
+                        }
                     }
+                } else {
+                    sendMessage(chatId, msgService.get("message.notFoundInGroups"), bot);
+                    botState = BotState.DEFAULT;
                 }
             }
             case "/help" -> {
@@ -250,8 +255,7 @@ public class TextHandler extends Handler{
             case "/get_group_id@IntercomCodesBot" -> {
                 if (bot.getOwnerId().equals(userId)){
                     deleteMessage(chatId, update.getMessage().getMessageId(), bot);
-                    sendMessage(chatId, chatId + " " + update.getMessage().getChat().getTitle() +
-                            "\n" + isUserInGroups(userId, bot), bot);
+                    sendMessage(chatId, chatId + " " + update.getMessage().getChat().getTitle(), bot);
                 }
                 botState = userDataCache.getUsersCurrentBotState(userId);
             }
@@ -528,7 +532,9 @@ public class TextHandler extends Handler{
                     }
                     userDataCache.setUsersCurrentBotState(userId, botState);
                 } else {
-                    sendMessage(chatId, msgService.get("message.default"), bot);
+                    if (update.getMessage().isUserMessage()) {
+                        sendMessage(chatId, msgService.get("message.default"), bot);
+                    }
                     botState = userDataCache.getUsersCurrentBotState(userId);
                 }
             }
