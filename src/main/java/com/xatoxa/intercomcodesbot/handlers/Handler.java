@@ -69,13 +69,7 @@ public abstract class Handler {
     UserHistoryService userHistoryService;
 
     @Autowired
-    UserService userService;
-
-    @Autowired
     UserInviteService inviteService;
-
-    @Autowired
-    GroupService groupService;
 
     public abstract void handle(Update update, LocaleMessageService msgService, Bot bot);
 
@@ -198,32 +192,5 @@ public abstract class Handler {
         }catch (TelegramApiException e){
             log.error(e.getMessage());
         }
-    }
-
-    protected boolean isUserInGroups(Long userId, Bot bot){
-        List<Group> groups = groupService.findAll();
-        boolean isInGroup = false;
-
-        if (groups.size() > 0){
-            for (Group group:
-                 groups) {
-                try {
-                    ChatMember chatMember = bot.execute(new GetChatMember(group.getId().toString(), userId));
-                    if (chatMember != null
-                                    && (chatMember.getStatus().equals("creator")
-                                    || chatMember.getStatus().equals("administrator")
-                                    || chatMember.getStatus().equals("member")
-                                    || chatMember.getStatus().equals("restricted"))) {
-                        isInGroup = true;
-                        break;
-                    }
-                } catch (TelegramApiException e) {
-                    throw new RuntimeException(e);
-                }
-
-            }
-        }
-
-        return isInGroup;
     }
 }

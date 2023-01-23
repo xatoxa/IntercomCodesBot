@@ -5,6 +5,7 @@ import com.xatoxa.intercomcodesbot.botapi.BotState;
 import com.xatoxa.intercomcodesbot.cache.CodeCache;
 import com.xatoxa.intercomcodesbot.entity.*;
 import com.xatoxa.intercomcodesbot.service.LocaleMessageService;
+import com.xatoxa.intercomcodesbot.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 public class CallbackHandler extends Handler{
     @Override
     public void handle(Update update, LocaleMessageService msgService, Bot bot){
+        UserService userService = bot.getUserService();
         BotState botState;
         long messageId = update.getCallbackQuery().getMessage().getMessageId();
         long chatId = update.getCallbackQuery().getMessage().getChatId();

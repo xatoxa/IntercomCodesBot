@@ -4,7 +4,9 @@ import com.xatoxa.intercomcodesbot.bot.Bot;
 import com.xatoxa.intercomcodesbot.botapi.BotState;
 import com.xatoxa.intercomcodesbot.cache.CodeCache;
 import com.xatoxa.intercomcodesbot.entity.*;
+import com.xatoxa.intercomcodesbot.service.GroupService;
 import com.xatoxa.intercomcodesbot.service.LocaleMessageService;
+import com.xatoxa.intercomcodesbot.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -19,6 +21,8 @@ import java.util.List;
 public class TextHandler extends Handler{
     @Override
     public void handle(Update update, LocaleMessageService msgService, Bot bot){
+        UserService userService = bot.getUserService();
+        GroupService groupService = bot.getGroupService();
         BotState botState;
         String msgText = update.getMessage().getText();
         Long userId = update.getMessage().getFrom().getId();
@@ -26,7 +30,7 @@ public class TextHandler extends Handler{
 
         switch (msgText) {
             case "/start" -> {
-                if (isUserInGroups(userId, bot)) {
+                if (bot.isUserInGroups(userId)) {
                     sendMessage(chatId, msgService.get("message.start"), bot);
                     if (!userService.existsById(userId)) {
                         sendMessage(chatId, msgService.get("message.sendInviteRequest"),

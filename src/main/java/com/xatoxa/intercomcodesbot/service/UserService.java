@@ -77,4 +77,8 @@ public class UserService {
         } else stB.append("Empty");
         return stB.toString();
     }
+
+    public List<User> findAll(){
+        return userRepository.findAll();
+    }
 }

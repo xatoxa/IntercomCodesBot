@@ -12,14 +12,19 @@ import com.xatoxa.intercomcodesbot.handlers.TextHandler;
 import com.xatoxa.intercomcodesbot.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
+import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMember;
 import org.telegram.telegrambots.meta.api.methods.send.SendLocation;
+import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Location;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -47,6 +52,20 @@ public class Bot extends TelegramLongPollingBot {
 
     @Autowired
     CallbackHandler callbackHandler;
+
+    @Autowired
+    UserService userService;
+
+    @Autowired
+    GroupService groupService;
+
+    public UserService getUserService() {
+        return userService;
+    }
+
+    public GroupService getGroupService() {
+        return groupService;
+    }
 
     public Bot(BotConfig config, LocaleMessageService msgService){
         this.config = config;
@@ -99,5 +118,50 @@ public class Bot extends TelegramLongPollingBot {
         } else if (update.hasCallbackQuery()) {
             callbackHandler.handle(update, msgService, this);
         }
+    }
+
+    @Scheduled(cron = "0 50 15 * * *")
+    private void userVerification(){
+        List<User> users = userService.findAll();
+        for (User user:
+             users) {
+            if (!isUserInGroups(user.getId())){
+                try {
+                    userService.delete(user);
+                    SendMessage sendMessage = new SendMessage(user.getChatId().toString(),
+                            msgService.get("message.goodbye"));
+                    execute(sendMessage);
+                }catch (Exception e){
+                    log.error(e.getMessage());
+                }
+            }
+        }
+
+    }
+
+    public boolean isUserInGroups(Long userId){
+        List<Group> groups = groupService.findAll();
+        boolean isInGroup = false;
+
+        if (groups.size() > 0){
+            for (Group group:
+                    groups) {
+                try {
+                    ChatMember chatMember = execute(new GetChatMember(group.getId().toString(), userId));
+                    if (chatMember != null
+                            && (chatMember.getStatus().equals("creator")
+                            || chatMember.getStatus().equals("administrator")
+                            || chatMember.getStatus().equals("member")
+                            || chatMember.getStatus().equals("restricted"))) {
+                        isInGroup = true;
+                        break;
+                    }
+                } catch (TelegramApiException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        return isInGroup;
     }
 }
