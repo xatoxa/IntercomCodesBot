@@ -209,7 +209,11 @@ public abstract class Handler {
                  groups) {
                 try {
                     ChatMember chatMember = bot.execute(new GetChatMember(group.getId().toString(), userId));
-                    if (chatMember != null) {
+                    if (chatMember != null
+                                    && (chatMember.getStatus().equals("creator")
+                                    || chatMember.getStatus().equals("administrator")
+                                    || chatMember.getStatus().equals("member")
+                                    || chatMember.getStatus().equals("restricted"))) {
                         isInGroup = true;
                         break;
                     }
