@@ -1,12 +1,8 @@
 package com.xatoxa.intercomcodesbot.bot;
 
-import com.xatoxa.intercomcodesbot.botapi.BotState;
-import com.xatoxa.intercomcodesbot.cache.CodeCache;
-import com.xatoxa.intercomcodesbot.cache.UserDataCache;
 import com.xatoxa.intercomcodesbot.config.BotConfig;
 import com.xatoxa.intercomcodesbot.entity.*;
 import com.xatoxa.intercomcodesbot.handlers.CallbackHandler;
-import com.xatoxa.intercomcodesbot.handlers.Handler;
 import com.xatoxa.intercomcodesbot.handlers.LocationHandler;
 import com.xatoxa.intercomcodesbot.handlers.TextHandler;
 import com.xatoxa.intercomcodesbot.service.*;
@@ -17,20 +13,12 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMember;
-import org.telegram.telegrambots.meta.api.methods.send.SendLocation;
-import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.Location;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.meta.generics.LongPollingBot;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -107,20 +95,17 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
-            if (update.getMessage().isUserMessage()
-                    || getOwnerId().equals(update.getMessage().getFrom().getId())) {
-                if (update.getMessage().hasText()) {
-                    textHandler.handle(update, msgService, this);
-                } else if (update.getMessage().hasLocation()) {
-                    locationHandler.handle(update, msgService, this);
-                }
+            if (update.getMessage().hasText()) {
+                textHandler.handle(update, msgService, this);
+            } else if (update.getMessage().hasLocation() && update.getMessage().isUserMessage()) {
+                locationHandler.handle(update, msgService, this);
             }
         } else if (update.hasCallbackQuery()) {
             callbackHandler.handle(update, msgService, this);
         }
     }
 
-    @Scheduled(cron = "0 50 15 * * *")
+    @Scheduled(cron = "0 33 3 * * *")
     private void userVerification(){
         List<User> users = userService.findAll();
         for (User user:

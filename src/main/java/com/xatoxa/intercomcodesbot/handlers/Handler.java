@@ -1,29 +1,28 @@
 package com.xatoxa.intercomcodesbot.handlers;
 
 import com.xatoxa.intercomcodesbot.bot.Bot;
+import com.xatoxa.intercomcodesbot.cache.BotPatienceCache;
 import com.xatoxa.intercomcodesbot.cache.UserDataCache;
-import com.xatoxa.intercomcodesbot.entity.Group;
 import com.xatoxa.intercomcodesbot.entity.HomeAbstract;
 import com.xatoxa.intercomcodesbot.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMember;
-import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMemberCount;
+import org.telegram.telegrambots.meta.api.methods.groupadministration.RestrictChatMember;
 import org.telegram.telegrambots.meta.api.methods.send.SendLocation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.ChatPermissions;
 import org.telegram.telegrambots.meta.api.objects.Location;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
-import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMemberMember;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,10 +31,13 @@ import java.util.List;
 @Slf4j
 public abstract class Handler {
     final static String BUTTON_CANCEL = "BUTTON_CANCEL";
+    final static String BUTTON_GROUP_CANCEL = "BUTTON_GROUP_CANCEL";
     final static String BUTTON_ACCEPT_ADD = "BUTTON_ACCEPT_ADD";
     final static String BUTTON_SELECT_HOME = "BUTTON_SELECT_HOME";
     final static String BUTTON_SEARCH_HOME = "BUTTON_SEARCH_HOME";
     final static String BUTTON_SEARCH_ENTRANCE = "BUTTON_SEARCH_ENTRANCE";
+    final static String BUTTON_GROUP_SEARCH_HOME = "BUTTON_GROUP_SEARCH_HOME";
+    final static String BUTTON_GROUP_SEARCH_ENTRANCE = "BUTTON_GROUP_SEARCH_ENTRANCE";
     final static String BUTTON_SELECT_ENTRANCE = "BUTTON_SELECT_ENTRANCE";
     final static String BUTTON_NOT_FOUND_HOME = "BUTTON_NOT_FOUND_HOME";
     final static String BUTTON_NOT_FOUND_ENTRANCE = "BUTTON_NOT_FOUND_ENTRANCE";
@@ -55,6 +57,9 @@ public abstract class Handler {
 
     @Autowired
     UserDataCache userDataCache;
+
+    @Autowired
+    BotPatienceCache botPatience;
 
     @Autowired
     HomeService homeService;
@@ -97,6 +102,7 @@ public abstract class Handler {
         if (isMarkdown){
             message.disableWebPagePreview();
             message.setParseMode("Markdown");
+            message.enableMarkdown(true);
         }
         executeSendMessage(message, bot);
     }
@@ -106,7 +112,7 @@ public abstract class Handler {
         message.setReplyMarkup(keyboardMarkup);
         if (isMarkdown){
             message.disableWebPagePreview();
-            message.setParseMode("Markdown");
+            message.enableMarkdown(true);
         }
         executeSendMessage(message, bot);
     }
@@ -192,5 +198,43 @@ public abstract class Handler {
         }catch (TelegramApiException e){
             log.error(e.getMessage());
         }
+    }
+
+    protected void muteUser(Long userId, Long chatId, Long minutes, Bot bot){
+        ChatPermissions permissions = ChatPermissions.builder()
+                .canInviteUsers(false)
+                .canChangeInfo(false)
+                .canAddWebPagePreviews(false)
+                .canPinMessages(false)
+                .canSendMediaMessages(false)
+                .canSendMessages(false)
+                .canSendOtherMessages(false)
+                .canSendPolls(false)
+                .build();
+        RestrictChatMember restrictChatMember = new RestrictChatMember(chatId.toString(), userId, permissions);
+        restrictChatMember.forTimePeriodDuration(Duration.ofMinutes(minutes));
+
+        try {
+            bot.execute(restrictChatMember);
+        } catch (TelegramApiException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    protected boolean isGroupAdmin(Long userId, Long chatId, Bot bot) {
+        boolean isAdmin = false;
+
+        try {
+            ChatMember chatMember = bot.execute(new GetChatMember(chatId.toString(), userId));
+            if (chatMember != null
+                    && (chatMember.getStatus().equals("creator")
+                    || chatMember.getStatus().equals("administrator"))) {
+                isAdmin = true;
+            }
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+
+        return isAdmin;
     }
 }

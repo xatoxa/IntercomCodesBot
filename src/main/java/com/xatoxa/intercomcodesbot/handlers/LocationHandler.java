@@ -34,6 +34,22 @@ public class LocationHandler extends Handler{
                 }
                 userDataCache.setUsersCurrentBotState(userId, botState);
             }
+            case GROUP_SEARCH -> {
+                List<Home> homes = homeService.findAllBy(update.getMessage().getLocation());
+                if (homes.size() == 0){
+                    sendMessage(chatId, msgService.get("message.notFound"), bot);
+                    botState = BotState.DEFAULT;
+                } else if (homes.size() == 1) {
+                    sendMessage(chatId, homes.get(0).toString(), bot);
+                    botState = BotState.DEFAULT;
+                } else {
+                    botState = BotState.GROUP_SEARCH_HOME;
+                    sendMessage(chatId, msgService.get("message.selectHome"),
+                            getMarkup(homes, BUTTON_GROUP_SEARCH_HOME,
+                                    getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
+                }
+                userDataCache.setUsersCurrentBotState(userId, botState);
+            }
             case ADD -> {
                 CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
                 Home home = new Home();

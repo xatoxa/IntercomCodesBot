@@ -22,18 +22,23 @@ public class CallbackHandler extends Handler{
     @Override
     public void handle(Update update, LocaleMessageService msgService, Bot bot){
         UserService userService = bot.getUserService();
-        BotState botState;
         long messageId = update.getCallbackQuery().getMessage().getMessageId();
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         long userId = update.getCallbackQuery().getFrom().getId();
         String callbackData = update.getCallbackQuery().getData();
         CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
+        BotState botState = userDataCache.getUsersCurrentBotState(userId);
 
         if (callbackData.equals(BUTTON_CANCEL)) {
             editMessage(chatId, messageId, msgService.get("message.cancelled"), bot);
             sendMessage(chatId, msgService.get("message.awaitingCommand"), bot);
             botState = BotState.DEFAULT;
             userDataCache.removeUsersCurrentCodeCache(userId);
+        } else if (callbackData.contains(BUTTON_GROUP_CANCEL)) {
+            if (Long.valueOf(callbackData.split("&")[1]).equals(userId)){
+                deleteMessage(chatId, messageId, bot);
+                botState = BotState.DEFAULT;
+            }
         } else if (callbackData.equals(BUTTON_ACCEPT_ADD)) {
             Home home = codeCache.getHome();
             Entrance entrance = codeCache.getEntrance();
@@ -105,6 +110,37 @@ public class CallbackHandler extends Handler{
                 sendMessage(chatId, entrance.getTextCodes(), bot);
             }
             botState = BotState.SEARCH;
+        }else if (callbackData.contains(BUTTON_GROUP_SEARCH_HOME)) {
+            if (Long.valueOf(callbackData.split("&")[1]).equals(userId)) {
+                Home home = homeService.findById(Long.valueOf(callbackData.split("&")[2]));
+                codeCache.setHome(home);
+                if (home.getEntrances().size() == 0) {
+                    sendMessage(chatId, msgService.get("message.notFoundEntrance"), bot);
+                    botState = BotState.DEFAULT;
+                } else if (home.getEntrances().size() > MAX_ENTRANCES) {
+                    sendMessage(chatId, msgService.get("message.selectEntrance"),
+                            getMarkup(home.getEntrances(), BUTTON_GROUP_SEARCH_ENTRANCE + "&" + userId,
+                                    getKeyboardRow(msgService.get("button.cancel"), BUTTON_GROUP_CANCEL  + "&" + userId)), bot);
+                    botState = BotState.GROUP_SEARCH_ENTRANCE;
+                } else {
+                    sendMessage(chatId, home.toString(), bot);
+                    botState = BotState.DEFAULT;
+                }
+                deleteMessage(chatId, messageId, bot);
+            }
+        } else if (callbackData.contains(BUTTON_GROUP_SEARCH_ENTRANCE)) {
+            if (Long.valueOf(callbackData.split("&")[1]).equals(userId)) {
+                Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[2]));
+                codeCache.setEntrance(entrance);
+                userDataCache.setUsersCurrentCodeCache(userId, codeCache);
+                if (entrance.getCodes().size() == 0) {
+                    sendMessage(chatId, msgService.get("message.notFoundEntrance"), bot);
+                } else {
+                    sendMessage(chatId, entrance.getTextCodes(), bot);
+                }
+                botState = BotState.DEFAULT;
+                deleteMessage(chatId, messageId, bot);
+            }
         } else if (callbackData.contains(BUTTON_SELECT_ENTRANCE)) {
             Entrance entrance = entranceService.findById(Long.valueOf(callbackData.split("&")[1]));
             codeCache.setEntrance(entrance);
