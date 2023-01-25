@@ -200,7 +200,7 @@ public abstract class Handler {
         }
     }
 
-    protected void muteUser(Long userId, Long chatId, Long minutes, Bot bot){
+    protected void muteUser(Long userId, Long chatId, Long minutes, Bot bot) throws TelegramApiException {
         ChatPermissions permissions = ChatPermissions.builder()
                 .canInviteUsers(false)
                 .canChangeInfo(false)
@@ -214,11 +214,7 @@ public abstract class Handler {
         RestrictChatMember restrictChatMember = new RestrictChatMember(chatId.toString(), userId, permissions);
         restrictChatMember.forTimePeriodDuration(Duration.ofMinutes(minutes));
 
-        try {
-            bot.execute(restrictChatMember);
-        } catch (TelegramApiException e) {
-            log.error(e.getMessage());
-        }
+        bot.execute(restrictChatMember);
     }
 
     protected boolean isGroupAdmin(Long userId, Long chatId, Bot bot) {

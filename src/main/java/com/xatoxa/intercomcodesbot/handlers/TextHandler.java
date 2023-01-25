@@ -10,6 +10,7 @@ import com.xatoxa.intercomcodesbot.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -88,12 +89,16 @@ public class TextHandler extends Handler{
                         sorry = "\n" + userLink(update.getMessage().getFrom()) +
                                 msgService.get("message.group.saySorry");
                     if (!isGroupAdmin(userId, chatId, bot)) {
-                        muteUser(userId, chatId, patience * 4L, bot);
-                        sendMessage(chatId,
-                                msgService.get("message.group.now") +
-                                        userLink(update.getMessage().getFrom()) + " " +
-                                        patience * 4 + msgService.get("message.group.mute") + sorry,
-                                true, bot);
+                        try {
+                            muteUser(userId, chatId, patience * 4L, bot);
+                            sendMessage(chatId,
+                                    msgService.get("message.group.now") +
+                                            userLink(update.getMessage().getFrom()) + " " +
+                                            patience * 4 + msgService.get("message.group.mute") + sorry,
+                                    true, bot);
+                        }catch (TelegramApiException e){
+                            log.error(e.getMessage());
+                        }
                     }
                 }
             }
