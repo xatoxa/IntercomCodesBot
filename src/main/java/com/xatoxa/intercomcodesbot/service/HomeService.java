@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Location;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class HomeService {
@@ -47,24 +49,37 @@ public class HomeService {
     }
 
     private String prepareKeyword(String keyword){
-        keyword = keyword.toLowerCase();
-        keyword = keyword.replaceAll("\\p{Punct}", "");
+        StringBuilder stB = new StringBuilder(keyword.toLowerCase());
 
-        keyword = keyword.replaceAll(".*?\\bмп\\b.*?", "московский");
-        keyword = keyword.replaceAll(".*?\\bхользы\\b.*?", "хользунова");
-        keyword = keyword.replaceAll(".*?\\bшишки\\b.*?", "шишкова");
-        keyword = keyword.replaceAll(".*?\\bармия\\b.*?", "армии");
-        keyword = keyword.replaceAll(".*?\\bлизюки\\b.*?", "лизюкова");
-        keyword = keyword.replaceAll(".*?\\bлизуны\\b.*?", "лизюкова");
-        keyword = keyword.replaceAll(".*?\\bхз\\b.*?", "хользунова");
+        replaceAll(stB, "\\p{Punct}", "");
+        replaceAll(stB, ".*?\\bмп\\b.*?", "московский");
+        replaceAll(stB, ".*?\\bхользы\\b.*?", "хользунова");
+        replaceAll(stB, ".*?\\bхз\\b.*?", "хользунова");
+        replaceAll(stB, ".*?\\bострова\\b.*?", "хользунова");
+        replaceAll(stB, ".*?\\bшишки\\b.*?", "шишкова");
+        replaceAll(stB, ".*?\\bармия\\b.*?", "армии");
+        replaceAll(stB, ".*?\\bпоебень\\b.*?", "армии");
+        replaceAll(stB, ".*?\\bлизюки\\b.*?", "лизюкова");
+        replaceAll(stB, ".*?\\bлизуны\\b.*?", "лизюкова");
+        replaceAll(stB, ".*?\\bжуки\\b.*?", "жукова");
+        replaceAll(stB, "\\bулица\\b", "");
+        replaceAll(stB, "\\bпроспект\\b", "");
+        replaceAll(stB, "\\bпереулок\\b", "");
+        replaceAll(stB, "\\s+", " ");
 
-        keyword = keyword.replaceAll("\\bулица\\b", "");
-        keyword = keyword.replaceAll("\\bпроспект\\b", "");
-        keyword = keyword.replaceAll("\\bпереулок\\b", "");
+        return stB.toString().trim();
+    }
 
-        keyword = keyword.replaceAll("\\s+", " ");
-        keyword = keyword.trim();
+    private static void replaceAll(StringBuilder sb, String find, String replace){
+        Pattern p = Pattern.compile(find);
+        Matcher m = p.matcher(sb);
 
-        return keyword;
+        int startIndex = 0;
+
+        while (m.find(startIndex)){
+            sb.replace(m.start(), m.end(), replace);
+
+            startIndex = m.start() + replace.length();
+        }
     }
 }
