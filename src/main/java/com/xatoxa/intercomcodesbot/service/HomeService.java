@@ -37,11 +37,34 @@ public class HomeService {
     }
 
     public List<Home> findAllBy(String keyword){
-        keyword = keyword.replaceAll("\\p{Punct}", "");
+        keyword = prepareKeyword(keyword);
+
         return homeRepository.findAllBy(keyword);
     }
 
     public List<Home> findAll(){
         return homeRepository.findAll();
+    }
+
+    private String prepareKeyword(String keyword){
+        keyword = keyword.toLowerCase();
+        keyword = keyword.replaceAll("\\p{Punct}", "");
+
+        keyword = keyword.replaceAll(".*?\\bмп\\b.*?", "московский");
+        keyword = keyword.replaceAll(".*?\\bхользы\\b.*?", "хользунова");
+        keyword = keyword.replaceAll(".*?\\bшишки\\b.*?", "шишкова");
+        keyword = keyword.replaceAll(".*?\\bармия\\b.*?", "армии");
+        keyword = keyword.replaceAll(".*?\\bлизюки\\b.*?", "лизюкова");
+        keyword = keyword.replaceAll(".*?\\bлизуны\\b.*?", "лизюкова");
+        keyword = keyword.replaceAll(".*?\\bхз\\b.*?", "хользунова");
+
+        keyword = keyword.replaceAll("\\bулица\\b", "");
+        keyword = keyword.replaceAll("\\bпроспект\\b", "");
+        keyword = keyword.replaceAll("\\bпереулок\\b", "");
+
+        keyword = keyword.replaceAll("\\s+", " ");
+        keyword = keyword.trim();
+
+        return keyword;
     }
 }
