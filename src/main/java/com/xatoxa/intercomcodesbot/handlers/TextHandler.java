@@ -152,7 +152,7 @@ public class TextHandler extends Handler{
                 }
                 case "/add" -> {
                     if (userService.isEnabled(userId)) {
-                        sendMessage(chatId, msgService.get("message.awaitingGeo"),
+                        sendMessage(chatId, msgService.get("message.awaitingGeoOrKey"),
                                 getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
                         botState = BotState.ADD;
                     } else {
@@ -386,6 +386,20 @@ public class TextHandler extends Handler{
                         sendMessage(chatId, msgService.get("message.inputEntrance"),
                                 getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
                         botState = BotState.ADD_ENTRANCE;
+                    } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD)){
+                        List<Home> homes = homeService.findAllBy(msgText);
+                        if (homes.size() == 0) {
+                            sendMessage(chatId, msgService.get("message.inputHome"),
+                                    getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
+                            botState = BotState.ADD_HOME;
+                        }else {
+                            sendMessage(chatId, msgService.get("message.selectHomeExtra"),
+                                    getMarkup(homes, BUTTON_SELECT_HOME,
+                                            getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
+                            botState = BotState.SELECT_HOME;
+                        }
+                        userDataCache.setUsersCurrentBotState(userId, botState);
+
                     } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_ENTRANCE)) {
                         CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
                         Entrance entrance = codeCache.getEntrance();
