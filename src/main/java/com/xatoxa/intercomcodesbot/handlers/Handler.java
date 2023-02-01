@@ -97,21 +97,21 @@ public abstract class Handler {
         executeSendMessage(message, bot);
     }
 
-    protected void sendMessage(long chatId, String text, boolean isMarkdown, Bot bot){
+    protected void sendMessage(long chatId, String text, boolean isHtml, Bot bot){
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
-        if (isMarkdown){
+        if (isHtml){
             message.disableWebPagePreview();
-            message.enableMarkdown(true);
+            message.enableHtml(true);
         }
         executeSendMessage(message, bot);
     }
 
-    protected void sendMessage(long chatId, String text, InlineKeyboardMarkup keyboardMarkup, boolean isMarkdown, Bot bot){
+    protected void sendMessage(long chatId, String text, InlineKeyboardMarkup keyboardMarkup, boolean isHtml, Bot bot){
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
         message.setReplyMarkup(keyboardMarkup);
-        if (isMarkdown){
+        if (isHtml){
             message.disableWebPagePreview();
-            message.enableMarkdown(true);
+            message.enableHtml(true);
         }
         executeSendMessage(message, bot);
     }

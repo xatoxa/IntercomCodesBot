@@ -658,7 +658,7 @@ public class TextHandler extends Handler{
         String link = user.getFirstName() + " " +
                 (user.getLastName() == null ? "" : user.getLastName() + " ");
         return user.getUserName() == null ?
-                "[" + link + "](tg://user?id=" + user.getId() + ")"
+                "<a href=\"tg://user?id=" + user.getId() + "\">" + link + "</a>"
                 : "@" + user.getUserName();
     }
 }

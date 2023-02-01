@@ -37,7 +37,9 @@ public class UserHistory {
 
     @Override
     public String toString() {
-        String link = username == null ? "[" + this.userId + "](tg://user?id=" + this.userId + ")" : "@" + this.username;
+        String link = username == null ?
+                "<a href=\"tg://user?id=" + this.userId + "\"> " + this.userId + "</a>"
+                : "@" + this.username;
 
         return link + " | " + this.action;
     }

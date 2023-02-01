@@ -32,12 +32,12 @@ public class User {
 
     @Column
     private boolean enabled;
-
+    //<a href="tg://user?id=123456789">inline mention of a user</a>
     @Override
     public String toString() {
         String link =
                 this.username == null ?
-                        "[" + this.id + "](tg://user?id=" + this.id + ")"
+                        "<a href=\"tg://user?id=" + this.id + "\"> " + this.id + "</a>"
                         : "@" + this.username;
         return this.id + " " + link + " " + (this.firstName == null ? "" : this.firstName + " ") +
                 (this.lastName == null ? "" : this.lastName + " ");
