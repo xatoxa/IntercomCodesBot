@@ -101,7 +101,6 @@ public abstract class Handler {
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
         if (isMarkdown){
             message.disableWebPagePreview();
-            message.setParseMode("Markdown");
             message.enableMarkdown(true);
         }
         executeSendMessage(message, bot);
