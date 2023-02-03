@@ -48,7 +48,8 @@ public class TextHandler extends Handler{
                             getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_GROUP_CANCEL  + "&" + userId)), bot);
                     botState = BotState.GROUP_SEARCH;
                 } else {
-                    sendMessage(chatId, msgService.get("message.notFoundSuchUser"), bot);
+                    sendMessage(chatId, userLink(update.getMessage().getFrom()) + ", " +
+                            msgService.get("message.notFoundSuchUser"), bot);
                     botState = BotState.DEFAULT;
                 }
                 deleteMessage(chatId, update.getMessage().getMessageId(), bot);
