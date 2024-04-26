@@ -42,6 +42,6 @@ public class HomeService {
     }
 
     public List<Home> findAll(){
-        return homeRepository.findAll();
+        return homeRepository.findAll(Sort.by("street").and(Sort.by("number")));
     }
 }
