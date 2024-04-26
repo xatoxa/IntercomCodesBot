@@ -10,13 +10,13 @@ import java.util.List;
 
 @Repository
 public interface HomeRepository extends JpaRepository<Home, Long> {
-    @Query("SELECT h FROM homes h WHERE h.lon BETWEEN :startLon AND :endLon AND h.lat BETWEEN :startLat AND :endLat")
+    @Query("SELECT h FROM homes h WHERE h.lon BETWEEN :startLon AND :endLon AND h.lat BETWEEN :startLat AND :endLat ORDER BY h.street ASC, h.number ASC")
     List<Home> findAllBy(
             @Param("startLon") Double startLon,
             @Param("endLon") Double endLon,
             @Param("startLat") Double startLat,
             @Param("endLat") Double endLat);
 
-    @Query("SELECT h FROM homes h WHERE lower(CONCAT(h.street, ' ', h.number)) LIKE lower(concat('%', :keyword,'%'))")
+    @Query("SELECT h FROM homes h WHERE lower(CONCAT(h.street, ' ', h.number)) LIKE lower(concat('%', :keyword,'%')) ORDER BY h.street ASC, h.number ASC")
     List<Home> findAllBy(@Param("keyword") String keyword);
 }

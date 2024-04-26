@@ -121,7 +121,6 @@ public class Bot extends TelegramLongPollingBot {
                 }
             }
         }
-
     }
 
     public boolean isUserInGroups(Long userId){

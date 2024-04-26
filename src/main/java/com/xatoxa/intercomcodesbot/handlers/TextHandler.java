@@ -15,6 +15,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Component
@@ -42,7 +44,7 @@ public class TextHandler extends Handler{
                 deleteMessage(chatId, update.getMessage().getMessageId(), bot);
 
                 botState = userDataCache.getUsersCurrentBotState(userId);
-            } else if (msgText.equals("/search@IntercomCodesBot")) {
+            } else if (msgText.contains("/search")) {
                 if (userService.isEnabled(userId)) {
                     sendMessage(chatId, msgService.get("message.awaitingGeoOrKey"),
                             getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_GROUP_CANCEL  + "&" + userId)), bot);
@@ -54,6 +56,8 @@ public class TextHandler extends Handler{
                 }
                 deleteMessage(chatId, update.getMessage().getMessageId(), bot);
             } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.GROUP_SEARCH)) {
+                msgText = prepareKeyword(msgText);
+                sendMessage(chatId, "Поиск: " + msgText, bot);
                 List<Home> homes = homeService.findAllBy(msgText);
                 if (homes.size() == 0){
                     sendMessage(chatId, msgService.get("message.notFound"), bot);
@@ -388,6 +392,7 @@ public class TextHandler extends Handler{
                                 getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_CANCEL)), bot);
                         botState = BotState.ADD_ENTRANCE;
                     } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD)){
+                        msgText = prepareKeyword(msgText);
                         List<Home> homes = homeService.findAllBy(msgText);
                         if (homes.size() == 0) {
                             sendMessage(chatId, msgService.get("message.inputHome"),
@@ -500,6 +505,8 @@ public class TextHandler extends Handler{
                                 code.getInverseAddress() + msgService.get("message.editThanks"), bot);
                         botState = BotState.DEFAULT;
                     } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.SEARCH)) {
+                        msgText = prepareKeyword(msgText);
+                        sendMessage(chatId, "Поиск: " + msgText, bot);
                         List<Home> homes = homeService.findAllBy(msgText);
                         if (homes.size() == 0){
                             sendMessage(chatId, msgService.get("message.notFound"), bot);
@@ -607,6 +614,7 @@ public class TextHandler extends Handler{
                         userDataCache.setUsersCurrentBotState(userId, botState);
                     } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.DELETE) &&
                             (userService.isAdmin(userId) || bot.getOwnerId().equals(userId) )) {
+                        msgText = prepareKeyword(msgText);
                         List<Home> homes = homeService.findAllBy(msgText);
                         if (homes.size() == 0){
                             sendMessage(chatId, msgService.get("message.notFound"), bot);
@@ -661,5 +669,41 @@ public class TextHandler extends Handler{
         return user.getUserName() == null ?
                 "<a href=\"tg://user?id=" + user.getId() + "\">" + link + "</a>"
                 : "@" + user.getUserName();
+    }
+
+    private String prepareKeyword(String keyword){
+        StringBuilder stB = new StringBuilder(keyword.toLowerCase());
+
+        replaceAll(stB, "[/\\\\\\\\]", "к");
+        replaceAll(stB, "\\p{Punct}", "");
+        replaceAll(stB, ".*?\\bмп\\b.*?", "московский");
+        replaceAll(stB, ".*?\\bхользы\\b.*?", "хользунова");
+        replaceAll(stB, ".*?\\bхз\\b.*?", "хользунова");
+        replaceAll(stB, ".*?\\bострова\\b.*?", "хользунова");
+        replaceAll(stB, ".*?\\bшишки\\b.*?", "шишкова");
+        replaceAll(stB, ".*?\\bармия\\b.*?", "армии");
+        replaceAll(stB, ".*?\\bпоебень\\b.*?", "армии");
+        replaceAll(stB, ".*?\\bлизюки\\b.*?", "лизюкова");
+        replaceAll(stB, ".*?\\bлизуны\\b.*?", "лизюкова");
+        replaceAll(stB, ".*?\\bжуки\\b.*?", "жукова");
+        replaceAll(stB, "\\bулица\\b", "");
+        replaceAll(stB, "\\bпроспект\\b", "");
+        replaceAll(stB, "\\bпереулок\\b", "");
+        replaceAll(stB, "\\s+", " ");
+
+        return stB.toString().trim();
+    }
+
+    private static void replaceAll(StringBuilder sb, String find, String replace){
+        Pattern p = Pattern.compile(find);
+        Matcher m = p.matcher(sb);
+
+        int startIndex = 0;
+
+        while (m.find(startIndex)){
+            sb.replace(m.start(), m.end(), replace);
+
+            startIndex = m.start() + replace.length();
+        }
     }
 }
