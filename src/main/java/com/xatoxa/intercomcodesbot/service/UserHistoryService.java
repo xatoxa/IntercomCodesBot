@@ -1,5 +1,6 @@
 package com.xatoxa.intercomcodesbot.service;
 
+import com.xatoxa.intercomcodesbot.ActionType;
 import com.xatoxa.intercomcodesbot.entity.UserHistory;
 import com.xatoxa.intercomcodesbot.repository.UserHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,8 @@ import java.util.List;
 
 @Service
 public class UserHistoryService {
+    String SEARCH = ActionType.SEARCH.name();
+
     @Autowired
     UserHistoryRepository userHistoryRepository;
 
@@ -21,6 +24,14 @@ public class UserHistoryService {
     }
 
     public List<UserHistory> findAllByUserId(long userId) {
-        return userHistoryRepository.findAllByUserIdOrderByDateTime(userId);
+        return userHistoryRepository.findAllByUserIdAndActionTypeNotOrderByDateTime(userId, SEARCH);
+    }
+
+    public List<UserHistory> findAllByActionTypeNotSearch(){
+        return userHistoryRepository.findAllByActionTypeNot(SEARCH);
+    }
+
+    public List<UserHistory> findAllByActionTypeIsSearch(){
+        return userHistoryRepository.findAllByActionType(SEARCH);
     }
 }

@@ -1,5 +1,6 @@
 package com.xatoxa.intercomcodesbot.entity;
 
+import com.xatoxa.intercomcodesbot.ActionType;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,12 +27,16 @@ public class UserHistory {
     private String action;
 
     @Column
+    private String actionType;
+
+    @Column
     private LocalDateTime dateTime;
 
-    public UserHistory(Long userId, String username, String action, LocalDateTime dateTime) {
+    public UserHistory(Long userId, String username, String action, ActionType actionType, LocalDateTime dateTime) {
         this.userId = userId;
         this.username = username;
         this.action = action;
+        this.actionType = actionType.name();
         this.dateTime = dateTime;
     }
 

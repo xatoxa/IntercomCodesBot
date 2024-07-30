@@ -1,5 +1,6 @@
 package com.xatoxa.intercomcodesbot.handlers;
 
+import com.xatoxa.intercomcodesbot.ActionType;
 import com.xatoxa.intercomcodesbot.bot.Bot;
 import com.xatoxa.intercomcodesbot.botapi.BotState;
 import com.xatoxa.intercomcodesbot.cache.CodeCache;
@@ -14,6 +15,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -208,7 +210,7 @@ public class TextHandler extends Handler{
                 case "/all_changes" -> {
                     if (userService.isEnabled(userId)) {
                         for (String sendText :
-                                listToString(userHistoryService.findAll())) {
+                                listToString(userHistoryService.findAllByActionTypeNotSearch())) {
                             sendMessage(chatId, sendText, true, bot);
                         }
                     } else {
@@ -380,6 +382,21 @@ public class TextHandler extends Handler{
                         botState = BotState.DEFAULT;
                     }
                 }
+                case "/searchStats" -> {
+                    if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
+                        if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
+                            for (String sendText :
+                                    listToString(userHistoryService.findAllByActionTypeIsSearch())) {
+                                sendMessage(chatId, sendText, true, bot);
+                            }
+                        } else{
+                            sendMessage(chatId, msgService.get("message.notAdmin"), bot);
+                        }
+                    } else {
+                        sendMessage(chatId, msgService.get("message.notFoundSuchUser"), bot);
+                    }
+                    botState = BotState.DEFAULT;
+                }
                 default -> {
                     if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_HOME)){
                         CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
@@ -449,7 +466,7 @@ public class TextHandler extends Handler{
                             homeService.save(home);
                             UserHistory userHistory = new UserHistory(userId, update.getMessage().getFrom().getUserName(),
                                     oldAddress + " -> " +
-                                            home.getAddress(), LocalDateTime.now());
+                                            home.getAddress(), ActionType.MODIFICATE, LocalDateTime.now());
                             userHistoryService.save(userHistory);
                         }catch (Exception e){
                             log.error(e.getMessage());
@@ -470,7 +487,7 @@ public class TextHandler extends Handler{
                             entranceService.save(entrance);
                             UserHistory userHistory = new UserHistory(userId, update.getMessage().getFrom().getUserName(),
                                     oldAddress + " -> " +
-                                            entrance.getInverseAddress(), LocalDateTime.now());
+                                            entrance.getInverseAddress(), ActionType.MODIFICATE, LocalDateTime.now());
                             userHistoryService.save(userHistory);
 
                         }catch (Exception e){
@@ -493,7 +510,7 @@ public class TextHandler extends Handler{
                             intercomCodeService.save(code);
                             UserHistory userHistory = new UserHistory(
                                     userId, update.getMessage().getFrom().getUserName(),
-                                    oldAddress + " -> " + code.getInverseAddress(), LocalDateTime.now());
+                                    oldAddress + " -> " + code.getInverseAddress(), ActionType.MODIFICATE, LocalDateTime.now());
                             userHistoryService.save(userHistory);
 
                         }catch (Exception e){
@@ -508,6 +525,23 @@ public class TextHandler extends Handler{
                         msgText = prepareKeyword(msgText);
                         sendMessage(chatId, "Поиск: " + msgText, bot);
                         List<Home> homes = homeService.findAllBy(msgText);
+
+                        //сохранение поискового запроса в историю
+                        StringBuilder historyHomes = new StringBuilder();
+                        Iterator<Home> stringIterator = homes.iterator();
+                        while(stringIterator.hasNext()){
+                            historyHomes.append(stringIterator.next().getAddress());
+
+                            if(stringIterator.hasNext()) {
+                                historyHomes.append("; ");
+                            }
+                        }
+                        UserHistory userHistory = new UserHistory(
+                                userId, update.getMessage().getFrom().getUserName(),
+                                "Ввод: \"" + msgText + "\" | Получено " + homes.size() + ": " + historyHomes,
+                                ActionType.SEARCH, LocalDateTime.now());
+                        userHistoryService.save(userHistory);
+
                         if (homes.size() == 0){
                             sendMessage(chatId, msgService.get("message.notFound"), bot);
                             botState = BotState.SEARCH;

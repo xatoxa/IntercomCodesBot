@@ -1,5 +1,6 @@
 package com.xatoxa.intercomcodesbot.handlers;
 
+import com.xatoxa.intercomcodesbot.ActionType;
 import com.xatoxa.intercomcodesbot.bot.Bot;
 import com.xatoxa.intercomcodesbot.botapi.BotState;
 import com.xatoxa.intercomcodesbot.cache.CodeCache;
@@ -48,7 +49,7 @@ public class CallbackHandler extends Handler{
                 entranceService.save(entrance);
                 intercomCodeService.save(code);
                 UserHistory userHistory = new UserHistory(
-                        userId, update.getCallbackQuery().getFrom().getUserName(), "+ " + code.getInverseAddress(), LocalDateTime.now());
+                        userId, update.getCallbackQuery().getFrom().getUserName(), "+ " + code.getInverseAddress(), ActionType.ADD, LocalDateTime.now());
                 userHistoryService.save(userHistory);
 
                 editMessage(chatId, messageId, msgService.get("message.confirm"), bot);
@@ -202,7 +203,7 @@ public class CallbackHandler extends Handler{
             Home home = homeService.findById(Long.valueOf(callbackData.split("&")[1]));
             try {
                 UserHistory userHistory = new UserHistory(userId, update.getCallbackQuery().getFrom().getUserName(),
-                        "- " + home.getAddress(), LocalDateTime.now());
+                        "- " + home.getAddress(), ActionType.DELETE, LocalDateTime.now());
                 homeService.delete(home);
                 userHistoryService.save(userHistory);
 
@@ -219,7 +220,7 @@ public class CallbackHandler extends Handler{
             try {
                 UserHistory userHistory = new UserHistory(
                         userId, update.getCallbackQuery().getFrom().getUserName(),
-                        "- " + entrance.getInverseAddress(), LocalDateTime.now());
+                        "- " + entrance.getInverseAddress(), ActionType.DELETE, LocalDateTime.now());
                 entrance.dismissHome();
                 homeService.save(home);
                 entranceService.delete(entrance);
@@ -238,7 +239,7 @@ public class CallbackHandler extends Handler{
             try {
                 UserHistory userHistory = new UserHistory(
                         userId, update.getCallbackQuery().getFrom().getUserName(),
-                        "- " + code.getInverseAddress(), LocalDateTime.now());
+                        "- " + code.getInverseAddress(), ActionType.DELETE, LocalDateTime.now());
                 code.dismissEntrance();
                 entranceService.save(entrance);
                 intercomCodeService.delete(code);

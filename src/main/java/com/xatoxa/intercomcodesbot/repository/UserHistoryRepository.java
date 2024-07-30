@@ -8,5 +8,8 @@ import java.util.List;
 
 @Repository
 public interface UserHistoryRepository extends JpaRepository<UserHistory, Long> {
-    List<UserHistory> findAllByUserIdOrderByDateTime(Long userId);
+    List<UserHistory> findAllByUserIdAndActionTypeNotOrderByDateTime(Long userId, String actionType);
+
+    List<UserHistory> findAllByActionTypeNot(String actionType);
+    List<UserHistory> findAllByActionType(String actionType);
 }
