@@ -8,6 +8,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 
 @Data
 @NoArgsConstructor
@@ -45,7 +47,7 @@ public class UserHistory {
         String link = username == null ?
                 "<a href=\"tg://user?id=" + this.userId + "\"> " + this.userId + "</a>"
                 : "@" + this.username;
-
-        return link + " | " + this.action;
+        String date = this.dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        return link + " | " + this.action + " | " + date + "\n";
     }
 }

@@ -44,6 +44,7 @@ public class TextHandler extends Handler{
                     (bot.getOwnerId().equals(userId) || userService.isAdmin(userId))){
                 botPatience.reset(Long.valueOf(msgText.split(" ")[1]));
                 deleteMessage(chatId, update.getMessage().getMessageId(), bot);
+                sendMessage(chatId, "✓", bot);
 
                 botState = userDataCache.getUsersCurrentBotState(userId);
             } else if (msgText.contains("/search")) {
@@ -385,10 +386,64 @@ public class TextHandler extends Handler{
                 case "/searchStats" -> {
                     if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
                         if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
+                            sendMessage(chatId, msgService.get("message.statsChoice"), bot);
+                        } else{
+                            sendMessage(chatId, msgService.get("message.notAdmin"), bot);
+                        }
+                    } else {
+                        sendMessage(chatId, msgService.get("message.notFoundSuchUser"), bot);
+                    }
+                    botState = BotState.DEFAULT;
+                }
+                case "/searchStatsToday" -> {
+                    if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
+                        if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
+                            List<UserHistory> userHistoryListToday = userHistoryService.findAllByActionTypeIsSearchToday();
+                            if (userHistoryListToday.isEmpty())
+                                sendMessage(chatId, msgService.get("message.notFound"), true, bot);
+                            for (String sendText :
+                                    listToString(userHistoryListToday)) {
+                                sendMessage(chatId, sendText, true, bot);
+                            }
+                        } else{
+                            sendMessage(chatId, msgService.get("message.notAdmin"), bot);
+                        }
+                    } else {
+                        sendMessage(chatId, msgService.get("message.notFoundSuchUser"), bot);
+                    }
+                    botState = BotState.DEFAULT;
+                }
+                case "/searchStatsAll" -> {
+                    if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
+                        if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
                             for (String sendText :
                                     listToString(userHistoryService.findAllByActionTypeIsSearch())) {
                                 sendMessage(chatId, sendText, true, bot);
                             }
+                        } else{
+                            sendMessage(chatId, msgService.get("message.notAdmin"), bot);
+                        }
+                    } else {
+                        sendMessage(chatId, msgService.get("message.notFoundSuchUser"), bot);
+                    }
+                    botState = BotState.DEFAULT;
+                }
+                case "/searchStatsTodayInFile" -> {
+                    if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
+                        if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
+                            sendMessage(chatId, msgService.get("message.statsChoice"), bot);
+                        } else{
+                            sendMessage(chatId, msgService.get("message.notAdmin"), bot);
+                        }
+                    } else {
+                        sendMessage(chatId, msgService.get("message.notFoundSuchUser"), bot);
+                    }
+                    botState = BotState.DEFAULT;
+                }
+                case "/searchStatsAllInFile" -> {
+                    if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
+                        if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
+                            sendMessage(chatId, msgService.get("message.statsChoice"), bot);
                         } else{
                             sendMessage(chatId, msgService.get("message.notAdmin"), bot);
                         }

@@ -6,6 +6,8 @@ import com.xatoxa.intercomcodesbot.repository.UserHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -32,6 +34,10 @@ public class UserHistoryService {
     }
 
     public List<UserHistory> findAllByActionTypeIsSearch(){
-        return userHistoryRepository.findAllByActionType(SEARCH);
+        return userHistoryRepository.findAllByActionTypeOrderByDateTimeAsc(SEARCH);
+    }
+
+    public List<UserHistory> findAllByActionTypeIsSearchToday(){
+        return userHistoryRepository.findAllByActionTypeAndDateTimeAfter(SEARCH, LocalDate.now().atTime(0,0));
     }
 }
