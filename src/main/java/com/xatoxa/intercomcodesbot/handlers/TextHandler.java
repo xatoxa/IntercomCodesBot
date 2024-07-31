@@ -13,7 +13,12 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -431,7 +436,12 @@ public class TextHandler extends Handler{
                 case "/searchStatsTodayInFile" -> {
                     if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
                         if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
-                            sendMessage(chatId, msgService.get("message.statsChoice"), bot);
+                            List<UserHistory> userHistoryListToday = userHistoryService.findAllByActionTypeIsSearchToday();
+                            String filePath = "intercom/files/statsBy" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss")) + ".txt";
+                            writeListToFile(userHistoryListToday, filePath);
+                            sendFile(chatId, filePath, bot);
+                            File file = new File(filePath);
+                            file.delete();
                         } else{
                             sendMessage(chatId, msgService.get("message.notAdmin"), bot);
                         }
@@ -443,7 +453,12 @@ public class TextHandler extends Handler{
                 case "/searchStatsAllInFile" -> {
                     if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
                         if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
-                            sendMessage(chatId, msgService.get("message.statsChoice"), bot);
+                            List<UserHistory> userHistoryListToday = userHistoryService.findAllByActionTypeIsSearch();
+                            String filePath = "intercom" + File.separator + "files" + File.separator + "statsAll.txt";
+                            writeListToFile(userHistoryListToday, filePath);
+                            sendFile(chatId, filePath, bot);
+                            File file = new File(filePath);
+                            file.delete();
                         } else{
                             sendMessage(chatId, msgService.get("message.notAdmin"), bot);
                         }
@@ -793,6 +808,31 @@ public class TextHandler extends Handler{
             sb.replace(m.start(), m.end(), replace);
 
             startIndex = m.start() + replace.length();
+        }
+    }
+
+    private static void writeListToFile(List<UserHistory> list, String filePath) {
+        File file = new File(filePath);
+        try {
+            if (file.createNewFile()) {
+                log.info("Файл создан: " + file.getName());
+            } else {
+                log.error("Файл уже существует: " + file.getName());
+            }
+        } catch (IOException e) {
+            log.error("Ошибка при создании файла: " + e.getMessage());
+            e.printStackTrace();
+            return; // Выходим из метода, если не удалось создать файл
+        }
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            for (UserHistory item : list) {
+                writer.write(item.toString());
+                writer.newLine();
+            }
+            log.info("записал в " + filePath);
+        } catch (IOException e) {
+            log.error("Ошибка при записи файла: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
