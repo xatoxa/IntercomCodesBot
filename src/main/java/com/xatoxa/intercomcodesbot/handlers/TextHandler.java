@@ -67,6 +67,24 @@ public class TextHandler extends Handler{
                 msgText = prepareKeyword(msgText);
                 sendMessage(chatId, "Поиск: " + msgText, bot);
                 List<Home> homes = homeService.findAllBy(msgText);
+
+
+                //сохранение поискового запроса в историю
+                StringBuilder historyHomes = new StringBuilder();
+                Iterator<Home> stringIterator = homes.iterator();
+                while(stringIterator.hasNext()){
+                    historyHomes.append(stringIterator.next().getAddress());
+
+                    if(stringIterator.hasNext()) {
+                        historyHomes.append("; ");
+                    }
+                }
+                UserHistory userHistory = new UserHistory(
+                        userId, update.getMessage().getFrom().getUserName(),
+                        "Ввод: \"" + msgText + "\" | Получено " + homes.size() + ": " + historyHomes,
+                        ActionType.SEARCH, LocalDateTime.now());
+                userHistoryService.save(userHistory);
+
                 if (homes.size() == 0){
                     sendMessage(chatId, msgService.get("message.notFound"), bot);
                     botState = BotState.DEFAULT;
