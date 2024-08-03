@@ -58,9 +58,9 @@ public class TextHandler extends Handler{
                             getMarkup(getKeyboardRow(msgService.get("button.cancel"), BUTTON_GROUP_CANCEL  + "&" + userId)), bot);
                     botState = BotState.GROUP_SEARCH;
                 } else {
-                    sendMessage(chatId, userLink(update.getMessage().getFrom()) + ", " +
-                            msgService.get("message.notFoundSuchUser"), bot);
-                    botState = BotState.DEFAULT;
+                    sendMessage(chatId,
+                            userLink(update.getMessage().getFrom()) +
+                            msgService.get("message.notFoundSuchUser"), true, bot);
                 }
                 deleteMessage(chatId, update.getMessage().getMessageId(), bot);
             } else if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.GROUP_SEARCH)) {
@@ -296,7 +296,7 @@ public class TextHandler extends Handler{
                 case "/admins" -> {
                     if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
                         if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
-                            sendMessage(chatId, userService.findAllByAdminToString(true), bot);
+                            sendMessage(chatId, userService.findAllByAdminToString(true), true, bot);
                         } else{
                             sendMessage(chatId, msgService.get("message.notAdmin"), bot);
                         }
@@ -308,7 +308,7 @@ public class TextHandler extends Handler{
                 case "/users" -> {
                     if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
                         if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
-                            sendMessage(chatId, userService.findAllByAdminToString(false), bot);
+                            sendMessage(chatId, userService.findAllByAdminToString(false), true, bot);
                         } else{
                             sendMessage(chatId, msgService.get("message.notAdmin"), bot);
                         }
