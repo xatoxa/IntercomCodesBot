@@ -12,8 +12,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
+import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMember;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
@@ -127,7 +129,7 @@ public class Bot extends TelegramLongPollingBot {
         List<Group> groups = groupService.findAll();
         boolean isInGroup = false;
 
-        if (groups.size() > 0){
+        if (!groups.isEmpty()){
             for (Group group:
                     groups) {
                 try {
@@ -147,5 +149,105 @@ public class Bot extends TelegramLongPollingBot {
         }
 
         return isInGroup;
+    }
+
+    public String actualizeGroups(){
+        List<Group> groups = groupService.findAll();
+        GetChat getChat = new GetChat();
+
+        StringBuilder response = new StringBuilder();
+
+        for (Group group: groups){
+            getChat.setChatId(group.getId());
+            try {
+                Chat chat = execute(getChat);
+                if (!group.getName().equals(chat.getTitle())) {
+                    response.append(group.getName())
+                            .append(" -> ")
+                            .append(chat.getTitle())
+                            .append("\n");
+                    group.setName(chat.getTitle());
+                    groupService.save(group);
+                }
+            }catch (TelegramApiException e){
+                log.error(e.getMessage());
+                return e.getMessage();
+            }
+        }
+
+        return response.toString();
+    }
+
+    public String actualizeUsers(){
+        List<Group> groups = groupService.findAll();
+        List<User> users = userService.findAll();
+        StringBuilder response = new StringBuilder();
+
+        if (!groups.isEmpty()){
+            for (Group group:
+                    groups) {
+                for (User user: users){
+                    try {
+                        ChatMember chatMember = execute(new GetChatMember(group.getId().toString(), user.getId()));
+                        if (chatMember != null
+                                && (chatMember.getStatus().equals("creator")
+                                || chatMember.getStatus().equals("administrator")
+                                || chatMember.getStatus().equals("member")
+                                || chatMember.getStatus().equals("restricted"))) {
+                            boolean isChanged = false;
+                            if (user.getUsername() == null || !user.getUsername().equals(chatMember.getUser().getUserName()))
+                            {
+                                response.append("Username (")
+                                        .append(user.getId())
+                                        .append("): ")
+                                        .append(user.getUsername())
+                                        .append(" -> ")
+                                        .append(chatMember.getUser().getUserName())
+                                        .append("\n");
+                                user.setUsername(chatMember.getUser().getUserName());
+                                isChanged = true;
+                            }
+                            if (user.getFirstName() == null || !user.getFirstName().equals(chatMember.getUser().getFirstName()))
+                            {
+                                response.append("First Name (")
+                                        .append(user.getId())
+                                        .append("): ")
+                                        .append(user.getFirstName())
+                                        .append(" -> ")
+                                        .append(chatMember.getUser().getFirstName())
+                                        .append("\n");
+                                user.setFirstName(chatMember.getUser().getFirstName());
+                                isChanged = true;
+                            }
+                            if (user.getLastName() == null || !user.getLastName().equals(chatMember.getUser().getLastName()))
+                            {
+                                response.append("Last Name (")
+                                        .append(user.getId())
+                                        .append("): ")
+                                        .append(user.getLastName())
+                                        .append(" -> ")
+                                        .append(chatMember.getUser().getLastName())
+                                        .append("\n");
+                                user.setLastName(chatMember.getUser().getLastName());
+                                isChanged = true;
+                            }
+                            if (isChanged) {
+                                //userService.save(user);
+                            }
+                        }else{
+                            response.append(user)
+                                    .append(" будет удалён")
+                                    .append("\n");
+                            //userService.delete(user);
+                        }
+                    } catch (TelegramApiException e) {
+                        log.error(e.getMessage());
+                        return e.getMessage();
+                    }
+                }
+            }
+        }
+
+        return response.toString();
     }
 }

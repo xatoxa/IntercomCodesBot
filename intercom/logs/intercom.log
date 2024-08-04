@@ -1,0 +1,37 @@
+2024-08-04T12:00:16.682+03:00  INFO 9920 --- [main] c.x.i.IntercomCodesBotApplication        : Starting IntercomCodesBotApplication using Java 18.0.2 with PID 9920 (D:\Java Projects\intercomcodesbot\target\classes started by antos in D:\Java Projects\intercomcodesbot)
+2024-08-04T12:00:16.683+03:00  INFO 9920 --- [main] c.x.i.IntercomCodesBotApplication        : The following 1 profile is active: "dev"
+2024-08-04T12:00:17.030+03:00  INFO 9920 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-08-04T12:00:17.093+03:00  INFO 9920 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 57 ms. Found 7 JPA repository interfaces.
+2024-08-04T12:00:17.530+03:00  INFO 9920 --- [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-08-04T12:00:17.594+03:00  INFO 9920 --- [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.1.5.Final
+2024-08-04T12:00:17.737+03:00  WARN 9920 --- [main] org.hibernate.orm.deprecation            : HHH90000021: Encountered deprecated setting [javax.persistence.sharedCache.mode], use [jakarta.persistence.sharedCache.mode] instead
+2024-08-04T12:00:17.853+03:00  INFO 9920 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-08-04T12:00:18.136+03:00  INFO 9920 --- [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@6af90849
+2024-08-04T12:00:18.137+03:00  INFO 9920 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-08-04T12:00:18.202+03:00  INFO 9920 --- [main] SQL dialect                              : HHH000400: Using dialect: org.hibernate.dialect.PostgreSQLDialect
+2024-08-04T12:00:19.147+03:00  INFO 9920 --- [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2024-08-04T12:00:19.154+03:00  INFO 9920 --- [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-08-04T12:00:20.452+03:00  INFO 9920 --- [main] c.x.i.IntercomCodesBotApplication        : Started IntercomCodesBotApplication in 4.06 seconds (process running for 4.368)
+2024-08-04T12:00:37.854+03:00 ERROR 9920 --- [notTyourFcknBussinesBot Telegram Executor] com.xatoxa.intercomcodesbot.bot.Bot      : Error executing org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat query: [400] Bad Request: chat not found
+2024-08-04T12:12:08.564+03:00  INFO 9920 --- [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-08-04T12:12:08.567+03:00  INFO 9920 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2024-08-04T12:12:08.570+03:00  INFO 9920 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2024-08-04T12:12:13.157+03:00  INFO 1600 --- [main] c.x.i.IntercomCodesBotApplication        : Starting IntercomCodesBotApplication using Java 18.0.2 with PID 1600 (D:\Java Projects\intercomcodesbot\target\classes started by antos in D:\Java Projects\intercomcodesbot)
+2024-08-04T12:12:13.159+03:00  INFO 1600 --- [main] c.x.i.IntercomCodesBotApplication        : The following 1 profile is active: "dev"
+2024-08-04T12:12:13.439+03:00  INFO 1600 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-08-04T12:12:13.484+03:00  INFO 1600 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 39 ms. Found 7 JPA repository interfaces.
+2024-08-04T12:12:13.757+03:00  INFO 1600 --- [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-08-04T12:12:13.794+03:00  INFO 1600 --- [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.1.5.Final
+2024-08-04T12:12:13.888+03:00  WARN 1600 --- [main] org.hibernate.orm.deprecation            : HHH90000021: Encountered deprecated setting [javax.persistence.sharedCache.mode], use [jakarta.persistence.sharedCache.mode] instead
+2024-08-04T12:12:13.988+03:00  INFO 1600 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-08-04T12:12:14.222+03:00  INFO 1600 --- [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@6870c3c2
+2024-08-04T12:12:14.223+03:00  INFO 1600 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-08-04T12:12:14.291+03:00  INFO 1600 --- [main] SQL dialect                              : HHH000400: Using dialect: org.hibernate.dialect.PostgreSQLDialect
+2024-08-04T12:12:15.158+03:00  INFO 1600 --- [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2024-08-04T12:12:15.164+03:00  INFO 1600 --- [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-08-04T12:12:16.733+03:00  INFO 1600 --- [main] c.x.i.IntercomCodesBotApplication        : Started IntercomCodesBotApplication in 3.826 seconds (process running for 4.034)
+2024-08-04T12:12:22.196+03:00 ERROR 1600 --- [notTyourFcknBussinesBot Telegram Executor] com.xatoxa.intercomcodesbot.bot.Bot      : Error executing org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat query: [400] Bad Request: chat not found
+2024-08-04T12:13:19.924+03:00 ERROR 1600 --- [notTyourFcknBussinesBot Telegram Executor] com.xatoxa.intercomcodesbot.bot.Bot      : Error executing org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMember query: [400] Bad Request: chat not found
+2024-08-04T12:26:30.951+03:00  INFO 1600 --- [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-08-04T12:26:30.953+03:00  INFO 1600 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2024-08-04T12:26:30.956+03:00  INFO 1600 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

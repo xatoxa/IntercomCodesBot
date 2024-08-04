@@ -485,6 +485,38 @@ public class TextHandler extends Handler{
                     }
                     botState = BotState.DEFAULT;
                 }
+                case "/actualizeGroups" -> {
+                    if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
+                        if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
+                            for (Long adminChatId:   //сообщение всем админам
+                                    userService.findAllIdByAdmin(true)) {
+                                sendMessage(adminChatId, "Проверяю требуется ли обновление базы данных групп...", bot);
+                                sendMessage(adminChatId, bot.actualizeGroups(), bot);
+                            }
+                        } else{
+                            sendMessage(chatId, msgService.get("message.notAdmin"), bot);
+                        }
+                    } else {
+                        sendMessage(chatId, msgService.get("message.notFoundSuchUser"), bot);
+                    }
+                    botState = BotState.DEFAULT;
+                }
+                case "/actualizeUsers" -> {
+                    if (userService.isEnabled(userId) || bot.getOwnerId().equals(userId)) {
+                        if (userService.isAdmin(userId) || bot.getOwnerId().equals(userId)) {
+                            //for (Long adminChatId:   //сообщение всем админам
+                                    //userService.findAllIdByAdmin(true)) {
+                                sendMessage(chatId, "Проверяю требуется ли обновление базы данных пользователей...", bot);
+                                sendMessage(chatId, bot.actualizeUsers(), bot);
+                            //}
+                        } else{
+                            sendMessage(chatId, msgService.get("message.notAdmin"), bot);
+                        }
+                    } else {
+                        sendMessage(chatId, msgService.get("message.notFoundSuchUser"), bot);
+                    }
+                    botState = BotState.DEFAULT;
+                }
                 default -> {
                     if (userDataCache.getUsersCurrentBotState(userId).equals(BotState.ADD_HOME)){
                         CodeCache codeCache = userDataCache.getUsersCurrentCodeCache(userId);
