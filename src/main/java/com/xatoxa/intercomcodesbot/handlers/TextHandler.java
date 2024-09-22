@@ -493,6 +493,15 @@ public class TextHandler extends Handler{
                                 sendMessage(adminChatId, "Проверяю требуется ли обновление базы данных групп...", bot);
                                 sendMessage(adminChatId, bot.actualizeGroups(), bot);
                             }
+                            String response = bot.actualizeGroups();
+                            for (Long adminChatId:   //сообщение всем админам
+                                    userService.findAllIdByAdmin(true)) {
+                                if (response.isEmpty()){
+                                    sendMessage(adminChatId, "Обновление не требуется", bot);
+                                }else{
+                                    sendMessage(adminChatId, response, bot);
+                                }
+                            }
                         } else{
                             sendMessage(chatId, msgService.get("message.notAdmin"), bot);
                         }
